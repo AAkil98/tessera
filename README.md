@@ -1,4 +1,4 @@
-# mada-swarm
+# Tessera
 
 Secure peer-to-peer file sharing built on the Mirror Frame Protocol and madakit.
 
@@ -27,10 +27,10 @@ We are drafting the specification documents before writing any code. Progress is
 
 | # | Document | Status |
 |---|----------|--------|
-| 1 | Vision & Scope | Not started |
-| 2 | Glossary | Not started |
-| 3 | Threat Model | Not started |
-| 4 | System Architecture | Not started |
+| 1 | Vision & Scope | Complete |
+| 2 | Glossary | Complete |
+| 3 | Threat Model | Complete |
+| 4 | System Architecture | Complete |
 | 5 | Wire Protocol Addendum | Not started |
 | 6 | Content Addressing Spec | Not started |
 | 7 | Swarm & Peer Discovery | Not started |
