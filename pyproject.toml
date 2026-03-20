@@ -82,6 +82,15 @@ ignore_missing_imports = true
 asyncio_mode = "auto"
 testpaths = ["tests"]
 addopts = "--tb=short -q"
+markers = [
+    "unit: unit tests (no I/O, no MFP)",
+    "integration: integration tests (real filesystem)",
+    "e2e: end-to-end tests (multi-node, MFP loopback)",
+    "adversarial: adversarial and fault injection tests",
+    "benchmark: performance benchmarks",
+    "slow: tests taking > 30s",
+    "ai: AI adapter tests (mock LLM)",
+]
 
 # ---------------------------------------------------------------------------
 # Coverage
