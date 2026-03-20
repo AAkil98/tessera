@@ -40,9 +40,7 @@ class CapacityError(TesseraError):
     """
 
     def __init__(self, current: int, maximum: int) -> None:
-        super().__init__(
-            f"capacity exhausted: {current}/{maximum} swarms active"
-        )
+        super().__init__(f"capacity exhausted: {current}/{maximum} swarms active")
         self.current = current
         self.maximum = maximum
 
@@ -57,8 +55,7 @@ class StarvationError(TesseraError):
 
     def __init__(self, manifest_hash: bytes, elapsed: float) -> None:
         super().__init__(
-            f"no peers found after {elapsed:.1f}s for "
-            f"{manifest_hash[:8].hex()}..."
+            f"no peers found after {elapsed:.1f}s for {manifest_hash[:8].hex()}..."
         )
         self.manifest_hash = manifest_hash
         self.elapsed = elapsed
@@ -73,9 +70,7 @@ class IntegrityError(TesseraError):
         actual: The hash of the assembled file.
     """
 
-    def __init__(
-        self, manifest_hash: bytes, expected: bytes, actual: bytes
-    ) -> None:
+    def __init__(self, manifest_hash: bytes, expected: bytes, actual: bytes) -> None:
         super().__init__(
             f"whole-file verification failed for "
             f"{manifest_hash[:8].hex()}: "
@@ -101,8 +96,7 @@ class ProtocolError(TesseraError):
         message: str = "",
     ) -> None:
         super().__init__(
-            message
-            or f"protocol error 0x{error_code:04X} from {peer_id[:8].hex()}..."
+            message or f"protocol error 0x{error_code:04X} from {peer_id[:8].hex()}..."
         )
         self.peer_id = peer_id
         self.error_code = error_code

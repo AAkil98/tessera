@@ -6,7 +6,7 @@ import hashlib
 
 import pytest
 
-from tessera.content.merkle import build_root, _EMPTY_ROOT
+from tessera.content.merkle import _EMPTY_ROOT, build_root
 
 
 def _h(data: bytes) -> bytes:

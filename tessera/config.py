@@ -109,9 +109,7 @@ class TesseraConfig:
     score_deprioritize: float = 0.3
 
     # --- Discovery (ts-spec-007) ---
-    discovery_backends: list[str] = field(
-        default_factory=lambda: ["tracker"]
-    )
+    discovery_backends: list[str] = field(default_factory=lambda: ["tracker"])
     tracker_urls: list[str] = field(default_factory=list)
     tracker_announce_interval: float = 1800.0
 

@@ -108,9 +108,7 @@ class Bitfield:
 
     def _check_index(self, index: int) -> None:
         if not (0 <= index < self._count):
-            raise IndexError(
-                f"bit index {index} out of range [0, {self._count})"
-            )
+            raise IndexError(f"bit index {index} out of range [0, {self._count})")
 
     def __repr__(self) -> str:
         return (

@@ -200,8 +200,7 @@ class ManifestParser:
 
         if len(manifest_bytes) < leaf_end:
             raise ValueError(
-                f"manifest truncated: need {leaf_end} bytes, "
-                f"got {len(manifest_bytes)}"
+                f"manifest truncated: need {leaf_end} bytes, got {len(manifest_bytes)}"
             )
 
         metadata = _decode_metadata(manifest_bytes[meta_start:meta_end])

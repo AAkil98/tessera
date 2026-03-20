@@ -12,8 +12,6 @@ from tessera.content.manifest import (
     MAGIC,
     ManifestBuilder,
     ManifestParser,
-    _HEADER_SIZE,
-    _encode_metadata,
 )
 from tessera.content.merkle import build_root
 from tessera.errors import ConfigError
@@ -86,9 +84,7 @@ def test_manifest_metadata_max_keys() -> None:
     """65 metadata keys → ConfigError (limit is 64)."""
     meta = {str(i): "v" for i in range(65)}
     with pytest.raises(ConfigError):
-        ManifestBuilder(
-            file_size=0, tessera_size=TESSERA_SIZE, metadata=meta
-        )
+        ManifestBuilder(file_size=0, tessera_size=TESSERA_SIZE, metadata=meta)
 
 
 @pytest.mark.unit

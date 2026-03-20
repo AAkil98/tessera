@@ -19,9 +19,9 @@ A torrent-inspired file sharing system where every peer is cryptographically aut
 
 ## Status
 
-**Pre-implementation — specification phase.**
+**Pre-implementation — specifications complete, implementation planned.**
 
-We are drafting the specification documents before writing any code. Progress is tracked in [SPECS_BUILD.md](SPECS_BUILD.md).
+All 13 specification documents are complete. The implementation strategy is defined in [IMPLEMENTATION.md](IMPLEMENTATION.md). Spec progress is tracked in [SPECS_BUILD.md](SPECS_BUILD.md).
 
 ## Specification Documents
 
@@ -31,15 +31,15 @@ We are drafting the specification documents before writing any code. Progress is
 | 2 | Glossary | Complete |
 | 3 | Threat Model | Complete |
 | 4 | System Architecture | Complete |
-| 5 | Wire Protocol Addendum | Not started |
-| 6 | Content Addressing Spec | Not started |
-| 7 | Swarm & Peer Discovery | Not started |
-| 8 | Piece Selection & Transfer Strategy | Not started |
-| 9 | AI Integration Spec | Not started |
-| 10 | API & CLI Design | Not started |
-| 11 | Storage & State Management | Not started |
-| 12 | Performance Budget | Not started |
-| 13 | Test & Validation Plan | Not started |
+| 5 | Wire Protocol Addendum | Complete |
+| 6 | Content Addressing Spec | Complete |
+| 7 | Swarm & Peer Discovery | Complete |
+| 8 | Piece Selection & Transfer Strategy | Complete |
+| 9 | AI Integration Spec | Complete |
+| 10 | API & CLI Design | Complete |
+| 11 | Storage & State Management | Complete |
+| 12 | Performance Budget | Complete |
+| 13 | Test & Validation Plan | Complete |
 
 ## License
 

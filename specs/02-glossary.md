@@ -5,7 +5,7 @@ id: ts-spec-002
 type: spec
 status: draft
 created: 2026-03-13
-revised: 2026-03-13
+revised: 2026-03-14
 authors:
   - Akil Abderrahim
   - Claude Opus 4.6
@@ -18,7 +18,8 @@ tags: [glossary, terminology, tessera]
 2. Terms Inherited from MFP
 3. Terms Inherited from madakit
 4. Terms Borrowed from BitTorrent (Redefined)
-5. References
+5. Internal Component Terms
+6. References
 
 ---
 
@@ -27,8 +28,8 @@ tags: [glossary, terminology, tessera]
 | Term | Definition |
 |------|------------|
 | **Tessera** | A single piece (chunk) of a file. The atomic unit of transfer between peers. Named after the individual tile in a mosaic. |
-| **Mosaic** | A complete file, composed of all its tesserae. A mosaic is fully assembled when every tessera has been received and verified. |
-| **Manifest** | A metadata document that describes a mosaic: its name, total size, tessera size, hash tree, and any additional attributes. The manifest is the entry point for fetching a file — analogous to a `.torrent` file. |
+| **Mosaic** | A complete file, composed of all its tesserae. A mosaic always represents exactly one file. A mosaic is fully assembled when every tessera has been received and verified. |
+| **Manifest** | An immutable metadata document that describes a mosaic: its name, total size, tessera size, hash tree, and any additional attributes. The manifest is the entry point for fetching a file — analogous to a `.torrent` file. Because the manifest hash is the mosaic's identity, any change to the content produces a new manifest and therefore a new mosaic. |
 | **Manifest Hash** | The SHA-256 hash of the manifest. The unique, content-addressed identifier for a mosaic. Used for discovery, deduplication, and integrity verification. |
 | **Hash Tree** | A Merkle tree whose leaves are the SHA-256 hashes of individual tesserae. The root hash is embedded in the manifest. Enables per-tessera verification without trusting the sender. |
 | **Swarm** | The set of peers currently participating in the transfer of a specific mosaic. A peer may belong to multiple swarms simultaneously. |
@@ -37,6 +38,7 @@ tags: [glossary, terminology, tessera]
 | **Publisher** | The peer that creates the manifest for a mosaic and seeds it for the first time. |
 | **Publish** | The act of chunking a file into tesserae, building the hash tree, producing the manifest, and announcing availability to the network. |
 | **Fetch** | The act of obtaining a manifest, joining its swarm, downloading all tesserae, verifying them against the hash tree, and assembling the mosaic on disk. |
+| **Bitfield** | A bitmap where each bit corresponds to a tessera index and indicates whether the local peer holds that tessera. Exchanged between peers upon joining a swarm and updated via HAVE announcements as new tesserae are acquired. |
 
 ## 2. Terms Inherited from MFP
 
@@ -81,9 +83,39 @@ These terms originate from the BitTorrent protocol. Tessera borrows the concepts
 | **Rarest First** | Piece selection strategy that prioritizes pieces held by the fewest peers. | Same concept, applicable. Tessera may also layer AI-driven selection on top (see ts-spec-008, ts-spec-009). |
 | **Endgame Mode** | Strategy where remaining pieces are requested from all available peers to avoid slow completion. | Same concept, applicable. Specified in ts-spec-008. |
 
+## 5. Internal Component Terms
+
+These terms name subcomponents defined in ts-spec-004 (System Architecture). They are not protocol-level concepts visible to external callers — they describe internal modules within Tessera's layered architecture.
+
+### Transfer Engine Components
+
+| Term | Definition |
+|------|------------|
+| **Chunker** | Splits a file into tesserae of configured size, builds the Merkle hash tree, and produces the manifest. Used during publish. |
+| **Assembler** | Writes verified tesserae to their position on disk, detects completion, and performs the final whole-file hash check. Used during fetch. |
+| **Piece Verifier** | Hashes each received tessera and validates it against the corresponding Merkle tree leaf. Rejects mismatches immediately. |
+| **Request Scheduler** | Decides which tesserae to request from which peers. Implements rarest-first selection, endgame mode, and concurrent request limits. Accepts hints from the Intelligence Bridge when available. |
+| **Peer Scorer** | Tracks per-peer metrics (serve latency, failure rate, bytes delivered) and feeds scores to the Request Scheduler for prioritization and to the Swarm Manager for disconnect decisions. |
+| **Bitfield Manager** | Maintains the local bitfield, exchanges bitfields with peers on channel establishment, and processes HAVE announcements. |
+
+### Swarm Manager Components
+
+| Term | Definition |
+|------|------------|
+| **Swarm Registry** | Maps manifest hashes to active swarms. Tracks membership, capacity, and state for each swarm. |
+| **Peer Connector** | Establishes and tears down MFP channels with peers. Handles the join handshake (manifest hash exchange, bitfield swap). |
+| **Discovery Client** | Queries discovery backends to find peers for a given manifest hash. Supports multiple backends and cross-references results when several are active (T8 mitigation). |
+| **Capacity Enforcer** | Enforces maximum peer count per swarm and maximum swarm count per node. Rejects new joins when limits are reached (T4 mitigation). |
+
+### Application Interface Components
+
+| Term | Definition |
+|------|------------|
+| **Intelligence Bridge** | Optional adapter that connects madakit's `BaseAgentClient` to the Request Scheduler and Discovery Client. When madakit is not installed, this component is a no-op. |
+
 ---
 
-## 5. References
+## 6. References
 
 | Ref | Document | Relevance |
 |-----|----------|-----------|
