@@ -7,18 +7,18 @@ Provides deterministic byte sequences for standard fixture sizes:
   small  — 768 KiB (three chunks)
   medium — 5 MiB (twenty chunks)
 """
+
 from __future__ import annotations
 
 import random
 
-
 FIXED_SEED = 42
 DEFAULT_CHUNK_SIZE = 256 * 1024  # 256 KiB — matches ts-spec-006
 
-TINY_SIZE = 1024                      # 1 KiB
-EXACT_SIZE = DEFAULT_CHUNK_SIZE       # 256 KiB
-SMALL_SIZE = DEFAULT_CHUNK_SIZE * 3   # 768 KiB
-MEDIUM_SIZE = DEFAULT_CHUNK_SIZE * 20 # 5 MiB
+TINY_SIZE = 1024  # 1 KiB
+EXACT_SIZE = DEFAULT_CHUNK_SIZE  # 256 KiB
+SMALL_SIZE = DEFAULT_CHUNK_SIZE * 3  # 768 KiB
+MEDIUM_SIZE = DEFAULT_CHUNK_SIZE * 20  # 5 MiB
 EMPTY_SIZE = 0
 
 

@@ -3,12 +3,12 @@
 All fixtures that produce random data use a deterministic PRNG so that
 tests are reproducible across runs and machines.
 """
+
 from __future__ import annotations
 
 import random
 
 import pytest
-
 
 FIXED_SEED = 42
 
