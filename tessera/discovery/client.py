@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
 
@@ -51,7 +52,7 @@ class DiscoveryClient:
 
     def __init__(
         self,
-        backends: list[DiscoveryBackend],
+        backends: Sequence[DiscoveryBackend],
         backend_timeout: float = _BACKEND_TIMEOUT,
     ) -> None:
         self._backends = backends
