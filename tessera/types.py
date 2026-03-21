@@ -91,6 +91,29 @@ class TransferStatus:
 
 
 @dataclass
+class AIStatus:
+    """Status snapshot for the Intelligence Bridge (ts-spec-009 §8)."""
+
+    active: bool
+    calls_total: int = 0
+    calls_failed: int = 0
+    last_success: float | None = None
+    last_failure: float | None = None
+    circuit_breaker_open: bool = False
+
+
+@dataclass
+class NodeStatus:
+    """Overall node status (ts-spec-010 §2)."""
+
+    agent_id: bytes
+    active_swarms: int
+    total_peers: int
+    capacity_remaining: int
+    ai: AIStatus | None
+
+
+@dataclass
 class DiscoveryResult:
     """One result from a natural-language query (ts-spec-009 §3)."""
 
