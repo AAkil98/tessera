@@ -1,12 +1,12 @@
 """Shared public types used across Tessera modules.
 
-Richer types (TransferStatus, NodeStatus, AIStatus, etc.) are added
-in later phases as the components that produce them are implemented.
+Spec: ts-spec-008 §7, ts-spec-010 §4
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
 
 
 @dataclass
@@ -40,6 +40,54 @@ class ManifestInfo:
 
     leaf_hashes: list[bytes]
     """SHA-256 hash of each tessera, in index order (length = tessera_count)."""
+
+
+class SwarmState(Enum):
+    """Lifecycle states of a swarm (ts-spec-007 §2)."""
+
+    PENDING = "PENDING"
+    ACTIVE = "ACTIVE"
+    DRAINING = "DRAINING"
+    CLOSED = "CLOSED"
+
+
+class TransferMode(Enum):
+    """Request Scheduler operating mode (ts-spec-008 §6)."""
+
+    NORMAL = "NORMAL"
+    ENDGAME = "ENDGAME"
+
+
+@dataclass
+class PeerStatus:
+    """Per-peer metrics snapshot (ts-spec-008 §7)."""
+
+    agent_id: bytes
+    score: float
+    latency_ms: float
+    failure_rate: float
+    bytes_delivered: int
+    hash_mismatches: int
+    in_flight: int
+
+
+@dataclass
+class TransferStatus:
+    """Full transfer status snapshot returned by TesseraNode.status() (ts-spec-008 §7)."""
+
+    manifest_hash: bytes
+    state: SwarmState
+    mode: TransferMode
+    progress: float
+    bytes_received: int
+    bytes_total: int
+    throughput_bps: float
+    eta_seconds: float | None
+    tesserae_verified: int
+    tesserae_total: int
+    tesserae_in_flight: int
+    stuck_tesserae: list[int]
+    peers: list[PeerStatus]
 
 
 @dataclass
