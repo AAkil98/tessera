@@ -37,7 +37,11 @@ from tessera.swarm.registry import SwarmRegistry
 from tessera.transfer.assembler import Assembler
 from tessera.transfer.scorer import PeerScorer
 from tessera.transfer.verifier import PieceVerifier
+from tessera.bridge.bridge import IntelligenceBridge
+from tessera.bridge.discovery_adapter import DiscoveryAdapter
+from tessera.bridge.moderation_adapter import ModerationAdapter
 from tessera.types import (
+    AIStatus,
     DiscoveryResult,
     ManifestEvent,
     ManifestInfo,
@@ -118,6 +122,11 @@ class TesseraNode:
         # Test-only injection point — not part of the public API.
         self._test_piece_provider: _PieceSource | None = None
 
+        # Intelligence Bridge (ts-spec-009).
+        self._bridge = IntelligenceBridge(client=self._config.ai_client)
+        self._discovery_adapter: DiscoveryAdapter | None = None
+        self._moderation_adapter = ModerationAdapter(self._bridge)
+
     # ------------------------------------------------------------------
     # Lifecycle
     # ------------------------------------------------------------------
@@ -129,6 +138,7 @@ class TesseraNode:
         startup_cleanup(data_dir)
         self._data_dir = data_dir
         self._manifest_store = ManifestStore(data_dir)
+        self._discovery_adapter = DiscoveryAdapter(self._bridge, self._manifest_store)
         self._tessera_store = TesseraStore(data_dir)
         await self._manifest_store.rebuild_index()
 
@@ -425,7 +435,14 @@ class TesseraNode:
                 active_swarms=0,
                 total_peers=total_peers,
                 capacity_remaining=self._config.max_swarms_per_node,
-                ai=None,
+                ai=AIStatus(
+                    active=self._bridge.active,
+                    calls_total=self._bridge.calls_total,
+                    calls_failed=self._bridge.calls_failed,
+                    last_success=self._bridge.last_success,
+                    last_failure=self._bridge.last_failure,
+                    circuit_breaker_open=self._bridge.circuit_breaker_open,
+                ),
             )
 
         statuses: list[TransferStatus] = []
@@ -462,11 +479,14 @@ class TesseraNode:
         text: str,
         max_results: int = 10,
     ) -> list[DiscoveryResult]:
-        """Search for mosaics (requires Intelligence Bridge — Phase 7).
+        """Search for mosaics using the Intelligence Bridge (ts-spec-009 §3).
 
-        Returns an empty list until the bridge is implemented.
+        Returns an empty list when madakit is not configured.
         """
-        return []
+        self._check_started()
+        if self._discovery_adapter is None:
+            return []
+        return await self._discovery_adapter.query(text, max_results)
 
     # ------------------------------------------------------------------
     # Internal helpers

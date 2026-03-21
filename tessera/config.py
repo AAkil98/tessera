@@ -114,6 +114,7 @@ class TesseraConfig:
     tracker_announce_interval: float = 1800.0
 
     # --- AI integration (ts-spec-009) ---
+    ai_client: Any | None = field(default=None, repr=False)
     ai_enabled: bool = True
     ai_moderation_on_publish: bool = True
     ai_moderation_on_fetch: bool = True
