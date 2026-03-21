@@ -206,7 +206,7 @@ class RequestScheduler:
         not_in_flight = needed - self._in_flight
 
         # --- Mode selection ---
-        if n_peers <= 1 or remaining <= self._sequential_threshold:
+        if n_peers <= 1 or remaining < self._sequential_threshold:
             # Sequential: index order, exclude in-flight.
             result = sorted(not_in_flight)[:count]
 
