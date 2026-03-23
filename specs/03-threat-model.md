@@ -5,7 +5,7 @@ id: ts-spec-003
 type: spec
 status: draft
 created: 2026-03-13
-revised: 2026-03-13
+revised: 2026-03-14
 authors:
   - Akil Abderrahim
   - Claude Opus 4.6
@@ -65,7 +65,7 @@ Tessera's security model rests on the following assumptions. If any of these are
 |---|--------|-------|-------|--------------------|
 | T1 | **Piece poisoning** | AC1 | A4 | A malicious peer serves a tessera whose bytes do not match the hash in the manifest's hash tree. If accepted, the assembled mosaic is corrupted. |
 | T2 | **Manifest tampering** | AC1, AC4 | A2 | An attacker modifies a manifest in transit or serves a forged manifest from a compromised discovery service. The fetcher builds an incorrect hash tree and accepts wrong tesserae. |
-| T3 | **Replay of stale manifest** | AC1 | A2 | An attacker re-announces an old version of a manifest after the publisher has issued an updated one. Peers fetch an outdated mosaic believing it to be current. |
+| T3 | **Replay of stale manifest** | AC1 | A2 | An attacker re-announces an older manifest hash via the discovery service or direct recommendation, causing peers to fetch an outdated mosaic believing it to be the latest version. Applies only when higher-level version tracking maps a logical name to manifest hashes. |
 | T4 | **Sybil flooding** | AC3 | A5, A7 | An attacker joins a swarm with many identities, consuming channel slots and bandwidth. Honest peers are crowded out or slowed down. |
 | T5 | **Selective piece withholding** | AC1, AC3 | A4, A7 | A peer (or colluding sybils) claims to hold tesserae via bitfield but never serves them, or serves them slowly. Fetchers waste time and channel capacity on unproductive requests. |
 | T6 | **Transfer eavesdropping** | AC2 | A1 | A network observer intercepts tessera payloads in transit to read file contents. |
@@ -94,7 +94,7 @@ These defenses must be built in Tessera. They are not covered by MFP.
 |--------|-----------|------------------------|
 | T1 — Piece poisoning | **Hash tree verification.** Every received tessera is hashed and verified against the corresponding leaf in the manifest's Merkle tree before being written to disk. Mismatches trigger immediate rejection and peer scoring penalty. | Tessera core — ts-spec-006. |
 | T2 — Manifest tampering (at rest / via discovery) | **Manifest hash pinning.** Fetchers obtain the manifest hash from a trusted source (TA3). Any manifest whose SHA-256 does not match the pinned hash is rejected, regardless of source. | Tessera core — ts-spec-006. |
-| T3 — Replay of stale manifest | **Manifest versioning.** Manifests include a monotonic version number and a publisher signature. Peers reject manifests with a version equal to or lower than one they have already seen for the same mosaic. | Tessera core — ts-spec-006. |
+| T3 — Replay of stale manifest | **Immutable manifest identity.** Manifests are immutable — each manifest hash uniquely identifies exactly one mosaic. There is no "updated" manifest; changed content produces a new hash and therefore a new mosaic. Fetchers always request by manifest hash, so replaying an old manifest simply serves the old (still valid) mosaic, not a corrupted one. If higher-level version tracking is used (mapping a name to a sequence of manifest hashes), the replay risk shifts to that registry, which is outside the core protocol. MFP's ratchet prevents replay of individual protocol messages within a session. | Tessera core — ts-spec-006. |
 | T4 — Sybil flooding | **Swarm capacity limits.** Each swarm enforces a maximum peer count. New join requests are rejected when the limit is reached. Combined with MFP's `max_agents` and `max_channels_per_agent`, this bounds the resources any attacker can consume. | Tessera swarm manager — ts-spec-007. |
 | T5 — Selective withholding | **Peer scoring and timeout.** Peers that repeatedly fail to serve requested tesserae within a deadline accumulate negative score. Below a threshold, they are deprioritized and eventually disconnected. | Tessera transfer engine — ts-spec-008. |
 | T8 — Discovery poisoning | **Multi-source verification.** Fetchers query multiple discovery sources and cross-reference results. Peers returned by a single source but absent from others are treated with lower trust. Ultimately bounded by TA3 — the manifest hash itself is the root of trust, not the discovery service. | Tessera discovery — ts-spec-007. |

@@ -5,7 +5,7 @@ id: ts-spec-004
 type: spec
 status: draft
 created: 2026-03-13
-revised: 2026-03-13
+revised: 2026-03-14
 authors:
   - Akil Abderrahim
   - Claude Opus 4.6
@@ -82,7 +82,7 @@ The Transfer Engine is responsible for moving tesserae between peers and guarant
 
 | Subcomponent | Responsibility |
 |-------------|----------------|
-| **Chunker** | Splits a file into tesserae of configured size. Builds the Merkle hash tree. Produces the manifest. Used during publish. |
+| **Chunker** | Splits a file into tesserae of configured size (default 256KB, max 1MB per MFP `max_payload`). Accepts a `ChunkingStrategy` protocol for alternative algorithms (e.g., content-defined chunking). Builds the Merkle hash tree. Produces the manifest. Used during publish. |
 | **Assembler** | Writes verified tesserae to their position on disk. Detects completion. Performs final whole-file hash check. Used during fetch. |
 | **Piece Verifier** | Hashes each received tessera and validates it against the corresponding leaf in the hash tree. Rejects mismatches immediately (mitigates T1). |
 | **Request Scheduler** | Decides which tesserae to request from which peers. Implements rarest-first selection, endgame mode, and concurrent request limits. Accepts hints from the Intelligence Layer when available. |
@@ -264,12 +264,21 @@ Tessera is designed to be extended without modifying its core. The following int
 | Extension Point | Interface | Purpose |
 |----------------|-----------|---------|
 | **Discovery Backend** | `DiscoveryBackend` protocol (Python `Protocol` class) | Plug in alternative discovery mechanisms. The default implementation is a centralized tracker client. A gossip-based or DHT backend can be swapped in by implementing `announce()`, `lookup()`, and `unannounce()`. |
+| **Chunking Strategy** | `ChunkingStrategy` protocol | Replace the default fixed-size chunking algorithm. Enables content-defined chunking (e.g., Rabin fingerprinting) for deduplication-sensitive workloads without modifying the Transfer Engine. |
 | **Piece Selection Strategy** | `SelectionStrategy` protocol | Replace or augment the default rarest-first algorithm. The Intelligence Bridge uses this interface to inject AI-driven selection when madakit is available. |
 | **Storage Backend** | `StorageBackend` protocol | Replace the default filesystem storage. Enables in-memory storage for testing, or alternative backends for embedded deployments where direct filesystem access is unavailable. |
 | **Peer Scoring Function** | `ScoringFunction` callable | Customize how peer metrics (latency, failure rate, bytes delivered) are combined into a single score. The default is a weighted linear combination. |
 | **Manifest Hooks** | `on_manifest_created`, `on_manifest_received` callbacks | Execute custom logic when a manifest is produced (publish) or first received (fetch). Use cases: logging, content moderation gate, metadata enrichment. |
 
 All extension points use Python's structural subtyping (`typing.Protocol`). No base class inheritance is required. If an object has the right methods with the right signatures, it qualifies.
+
+### Forward Dependencies
+
+| Concern | Owner Spec | Notes |
+|---------|-----------|-------|
+| **Configuration surface** | ts-spec-010 (API & CLI Design) | A `TesseraConfig` dataclass defines defaults for tessera size, max concurrent requests, max peers per swarm, shutdown timeout, and other configurable values. Other specs reference these values but do not define the config object. |
+| **Network partition mid-transfer** | ts-spec-007 (Swarm & Peer Discovery) | Peer unavailability, reconnection, and swarm recovery are Swarm Manager concerns. |
+| **MFP crash recovery, partial disk write failures** | ts-spec-011 (Storage & State Management) | Resumable state, write-ahead integrity, and crash recovery belong to the storage layer. |
 
 ---
 

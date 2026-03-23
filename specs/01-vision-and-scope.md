@@ -5,7 +5,7 @@ id: ts-spec-001
 type: spec
 status: draft
 created: 2026-03-13
-revised: 2026-03-13
+revised: 2026-03-14
 authors:
   - Akil Abderrahim
   - Claude Opus 4.6
@@ -60,7 +60,7 @@ The result is a system that inherits the resilience of decentralized swarms, the
 - **NG1: BitTorrent compatibility.** We do not implement or interoperate with the BitTorrent protocol, DHT, or tracker standards.
 - **NG2: Anonymity.** Authenticated identity is a core guarantee. Anonymizing the network is an explicit non-goal.
 - **NG3: Massive-scale public swarms.** The design targets private or semi-private networks of tens to hundreds of peers, not open internet swarms of thousands.
-- **NG4: Streaming media.** Real-time audio/video streaming is out of scope. The unit of transfer is a complete file.
+- **NG4: Streaming media.** Real-time audio/video streaming is out of scope. The unit of transfer is a complete file. A mosaic always represents a single file — directory or bundle sharing is not supported in v1.
 - **NG5: Storage platform.** Tessera moves files between peers. It is not a distributed filesystem or persistent object store.
 
 ## 4. Target Users
@@ -112,7 +112,7 @@ madakit is an optional enhancement. The core transfer protocol functions without
 - **SC1:** Two MFP-bound agents can exchange a file of at least 100 MB over a swarm, with every piece encrypted, hash-verified, and replay-protected — without either agent handling cryptography directly.
 - **SC2:** A file can be sourced from three or more peers simultaneously, with the transfer completing faster than fetching from any single peer alone.
 - **SC3:** A poisoned piece (corrupted or forged) from a malicious peer is detected and rejected at the protocol layer. The malicious peer is quarantined. The transfer completes from honest peers.
-- **SC4:** An agent can discover and fetch a file using a natural-language query through madakit, without knowing the manifest hash in advance.
+- **SC4:** When madakit is installed, an agent can discover and fetch a file using a natural-language query, without knowing the manifest hash in advance. Without madakit, fetchers must obtain manifest hashes through out-of-band means or direct peer recommendation.
 - **SC5:** The library API allows a complete publish-discover-fetch cycle in under 20 lines of application code.
 - **SC6:** All of the above work identically whether peers are in the same MFP runtime or federated across separate runtimes.
 
