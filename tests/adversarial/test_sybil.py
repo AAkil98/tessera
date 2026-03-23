@@ -132,7 +132,6 @@ async def test_sybil_does_not_write_corrupt_pieces_to_disk(tmp_path: Path) -> No
 
         # No piece should be on disk (corrupt data must be rejected before write).
         from tessera.storage.tessera_store import TesseraStore
-        from tessera.storage.layout import tessera_dir
 
         ts = TesseraStore(fetch_dir)
         assert not ts.exists(mh, 0)

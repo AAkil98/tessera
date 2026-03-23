@@ -11,7 +11,6 @@ import pytest
 from tessera import TesseraConfig, TesseraNode
 from tessera.bridge.bridge import IntelligenceBridge
 from tessera.bridge.discovery_adapter import DiscoveryAdapter
-from tessera.types import DiscoveryResult
 from tests.fixtures import DEFAULT_CHUNK_SIZE, small, tiny
 
 
@@ -61,8 +60,7 @@ async def test_discovery_adapter_returns_matching_result(tmp_path: Path) -> None
     (pub / "data.bin").write_bytes(small())
 
     async with TesseraNode(_config(pub)) as seeder:
-        mh = await seeder.publish(pub / "data.bin", metadata={"name": "Q3 Report"})
-        mh_hex = mh.hex()
+        await seeder.publish(pub / "data.bin", metadata={"name": "Q3 Report"})
 
     # Rebuild a store to query against.
     async with TesseraNode(_config(pub)) as node:

@@ -7,7 +7,7 @@ name = "tessera"
 version = "0.1.0"
 description = "Secure peer-to-peer file sharing built on MFP and madakit"
 requires-python = ">=3.11"
-license = {text = "TBD"}
+license = {text = "Apache-2.0"}
 authors = [{name = "Akil Abderrahim"}]
 dependencies = [
     "pymfp>=0.1.0",

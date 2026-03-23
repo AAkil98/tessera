@@ -372,10 +372,10 @@ async def _cmd_status(args: argparse.Namespace) -> int:
         else:
             assert isinstance(result, TransferStatus)
             s = result
-            pct = s.progress * 100
+            progress_pct = s.progress * 100
             print(f"Mosaic:     {s.manifest_hash.hex()[:16]}...")
             print(f"State:      {s.state.name}")
-            print(f"Progress:   {s.tesserae_verified} / {s.tesserae_total} ({pct:.1f}%)")
+            print(f"Progress:   {s.tesserae_verified} / {s.tesserae_total} ({progress_pct:.1f}%)")
             print(f"Peers:      {len(s.peers)}")
             print(f"Throughput: {_fmt_throughput(s.throughput_bps)}")
             print(f"ETA:        {_fmt_eta(s.eta_seconds)}")
