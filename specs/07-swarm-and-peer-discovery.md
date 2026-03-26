@@ -3,9 +3,9 @@
 ```yaml
 id: ts-spec-007
 type: spec
-status: draft
+status: stable
 created: 2026-03-15
-revised: 2026-03-15
+revised: 2026-03-26
 authors:
   - Akil Abderrahim
   - Claude Opus 4.6

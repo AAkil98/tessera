@@ -29,6 +29,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from tessera import __version__
 from tessera.config import TesseraConfig
 from tessera.errors import (
     ConfigError,
@@ -428,6 +429,9 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="tessera",
         description="Secure peer-to-peer file sharing",
+    )
+    parser.add_argument(
+        "--version", action="version", version=f"tessera {__version__}",
     )
 
     # Global options

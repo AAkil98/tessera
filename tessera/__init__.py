@@ -5,7 +5,9 @@ Public API (ts-spec-010 §2):
     from tessera import TesseraNode, TesseraConfig
 """
 
+__version__ = "1.0.0"
+
 from tessera.config import TesseraConfig
 from tessera.node import TesseraNode
 
-__all__ = ["TesseraNode", "TesseraConfig"]
+__all__ = ["TesseraNode", "TesseraConfig", "__version__"]

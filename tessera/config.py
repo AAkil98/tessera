@@ -20,7 +20,11 @@ from tessera.errors import ConfigError
 
 # ---------------------------------------------------------------------------
 # MFP default payload limit — used to validate tessera_size.
-# Must be ≤ MFP RuntimeConfig.max_payload_size (ts-spec-005 §6).
+# Must be ≤ MFP 1.0.0 RuntimeConfig.max_payload_size (ts-spec-005 §6).
+#
+# MFP 1.0.0 also introduces max_message_rate=1000 (sliding 1-second window).
+# Tessera's default concurrency (max_requests_per_peer=5,
+# max_requests_per_swarm=20) operates well within that limit.
 # ---------------------------------------------------------------------------
 _DEFAULT_MAX_PAYLOAD: int = 1_048_576  # 1 MB
 

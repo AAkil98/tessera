@@ -97,6 +97,13 @@ def test_fmt_throughput() -> None:
 # Argument parser
 # ---------------------------------------------------------------------------
 
+def test_version_flag() -> None:
+    parser = _build_parser()
+    with pytest.raises(SystemExit) as exc_info:
+        parser.parse_args(["--version"])
+    assert exc_info.value.code == 0
+
+
 def test_parser_publish_required_file() -> None:
     parser = _build_parser()
     with pytest.raises(SystemExit):

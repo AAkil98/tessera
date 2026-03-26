@@ -12,11 +12,11 @@ concurrency:
   cancel-in-progress: true
 
 # ---------------------------------------------------------------------------
-# NOTE: pymfp and madakit are sibling packages not published to PyPI.
-# Each job installs tessera with --no-deps and pins the dev tools directly.
-# When the repos are public, replace the install steps with:
-#   pip install -e ../mirror-frame-protocol
-#   pip install -e ../mada-modelkit
+# NOTE: pymfp (>=1.0.0) and madakit are sibling packages not published to
+# PyPI. Each job installs tessera with --no-deps and pins the dev tools
+# directly. When the repos are public, replace the install steps with:
+#   pip install -e ../mirror-frame-protocol   # pymfp >= 1.0.0
+#   pip install -e ../mada-modelkit           # madakit >= 1.0.0
 #   pip install -e ".[dev]"
 # ---------------------------------------------------------------------------
 
@@ -46,6 +46,16 @@ jobs:
 
       - name: mypy type check
         run: mypy tessera/
+
+      - name: Version consistency check
+        run: |
+          python -c "
+          import tessera, tomllib
+          with open('pyproject.toml', 'rb') as f:
+              v = tomllib.load(f)['project']['version']
+          assert tessera.__version__ == v, f'{tessera.__version__} != {v}'
+          print(f'Version OK: {v}')
+          "
 
   unit:
     name: Unit Tests

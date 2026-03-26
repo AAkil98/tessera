@@ -4,7 +4,7 @@
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Status](https://img.shields.io/badge/status-alpha-orange.svg)](https://github.com/yourusername/tessera/releases)
+[![Status](https://img.shields.io/badge/status-stable-green.svg)](https://github.com/yourusername/tessera/releases)
 
 Tessera is a torrent-inspired file sharing system where every peer is cryptographically authenticated, every chunk is end-to-end encrypted, and AI provides intelligent content discovery, routing, and moderation.
 
@@ -179,20 +179,22 @@ ruff format tessera/
 
 ## Project Status
 
-**Current Version:** v0.1.0-alpha
+**Current Version:** v1.0.0
 
-This is an **alpha release** intended for early adopters and testing. The implementation is complete with 318 passing tests, but the API may change before the stable 1.0 release.
+This is the **stable 1.0.0 release**. The public API (`TesseraNode`, `TesseraConfig`) follows semantic versioning — breaking changes only in major versions.
 
 ### Roadmap
 
 - [x] Phase 0-9: Complete implementation
-- [x] 318 tests passing
+- [x] 318+ tests passing
 - [x] 8 performance benchmarks
+- [x] CI/CD pipeline
+- [x] API stability (semver commitment)
+- [x] 1.0 stable release
 - [ ] Execute benchmarks on target hardware
-- [ ] Set up CI/CD pipeline
-- [ ] Beta release with API stability
 - [ ] Generate API documentation
-- [ ] 1.0 stable release
+- [ ] Federation support (MFP bilateral channels)
+- [ ] MFP async pipeline adoption
 
 ## Documentation
 
@@ -204,7 +206,7 @@ This is an **alpha release** intended for early adopters and testing. The implem
 
 ### Required
 - Python ≥ 3.11
-- pymfp ≥ 0.1.0
+- pymfp ≥ 1.0.0
 
 ### Optional
 - madakit ≥ 1.0.0 (AI features)
