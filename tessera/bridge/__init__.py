@@ -3,7 +3,12 @@
 Public exports for the bridge package.
 """
 
-from tessera.bridge.bridge import BaseAgentClient, IntelligenceBridge, PeerRankingHint, SelectionHint
+from tessera.bridge.bridge import (
+    BaseAgentClient,
+    IntelligenceBridge,
+    PeerRankingHint,
+    SelectionHint,
+)
 from tessera.bridge.discovery_adapter import DiscoveryAdapter
 from tessera.bridge.moderation_adapter import ModerationAdapter, ModerationResult
 from tessera.bridge.ranking_adapter import RankingAdapter

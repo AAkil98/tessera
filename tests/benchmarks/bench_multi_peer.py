@@ -69,13 +69,13 @@ class MultiPeerSource:
 @pytest.mark.slow
 async def test_bench_multi_peer(tmp_path: Path) -> None:
     """Measure multi-peer transfer throughput and speedup vs single peer."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Multi-Peer Scaling Benchmark")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Create test file
     file_size = SIZE_50MB
-    print(f"\nPreparing {file_size // (1024*1024)} MB test file...")
+    print(f"\nPreparing {file_size // (1024 * 1024)} MB test file...")
     src_dir = tmp_path / "source"
     src_dir.mkdir()
     src_file = src_dir / "test.bin"
@@ -140,9 +140,9 @@ async def test_bench_multi_peer(tmp_path: Path) -> None:
     # Verify correctness
     output_data = output_path.read_bytes()
     assert len(output_data) == len(test_data), "Size mismatch"
-    assert (
-        hashlib.sha256(output_data).digest() == hashlib.sha256(test_data).digest()
-    ), "Hash mismatch"
+    assert hashlib.sha256(output_data).digest() == hashlib.sha256(test_data).digest(), (
+        "Hash mismatch"
+    )
 
     # Calculate speedup (compare against theoretical single-peer baseline)
     # For a more accurate comparison, we'd run bench_single_peer first
@@ -173,8 +173,8 @@ async def test_bench_multi_peer(tmp_path: Path) -> None:
     results_file.write_text(json.dumps(result, indent=2))
 
     # Print summary
-    print(f"\n{'='*60}")
-    print(f"File size:        {file_size // (1024*1024)} MB")
+    print(f"\n{'=' * 60}")
+    print(f"File size:        {file_size // (1024 * 1024)} MB")
     print(f"Num peers:        {NUM_SEEDERS}")
     print(f"Elapsed:          {elapsed_s:.3f} s")
     print(f"Throughput:       {throughput_mbps:.2f} MB/s")
@@ -183,7 +183,7 @@ async def test_bench_multi_peer(tmp_path: Path) -> None:
     print(f"Speedup budget:   ≥{SPEEDUP_BUDGET}×")
     print(f"Status:           {'✓ PASS' if budget_met else '✗ FAIL'}")
     print("\nNote: LocalPeerSource (no MFP). Baseline is conservative estimate.")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # Advisory warning
     if speedup < SPEEDUP_BUDGET * 0.75:

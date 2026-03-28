@@ -87,22 +87,22 @@ async def stage_pieces(
 @pytest.mark.slow
 async def test_bench_assembly(tmp_path: Path) -> None:
     """Measure assembly throughput for 100 MB file (~400 pieces)."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Assembly Throughput Benchmark")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Generate test data
     file_size = SIZE_100MB
-    print(f"\nGenerating {file_size // (1024*1024)} MB test data...")
+    print(f"\nGenerating {file_size // (1024 * 1024)} MB test data...")
     test_data = make_bytes(file_size)
 
     # Pre-stage pieces
     print("Staging pieces to disk...")
-    manifest_hash, manifest_info = await stage_pieces(
-        tmp_path, test_data, TESSERA_SIZE
-    )
+    manifest_hash, manifest_info = await stage_pieces(tmp_path, test_data, TESSERA_SIZE)
     piece_count = manifest_info.tessera_count
-    print(f"Staged {piece_count} pieces ({piece_count * TESSERA_SIZE // (1024*1024)} MB)")
+    print(
+        f"Staged {piece_count} pieces ({piece_count * TESSERA_SIZE // (1024 * 1024)} MB)"
+    )
 
     # Benchmark assembly
     output_path = tmp_path / "assembled.bin"
@@ -151,8 +151,8 @@ async def test_bench_assembly(tmp_path: Path) -> None:
     results_file.write_text(json.dumps(result, indent=2))
 
     # Print summary
-    print(f"\n{'='*60}")
-    print(f"File size:       {file_size // (1024*1024)} MB")
+    print(f"\n{'=' * 60}")
+    print(f"File size:       {file_size // (1024 * 1024)} MB")
     print(f"Piece count:     {piece_count}")
     print(f"Elapsed:         {elapsed_ms:.2f} ms ({elapsed_s:.3f} s)")
     print(f"Throughput:      {throughput_mbps:.2f} MB/s")
@@ -160,7 +160,7 @@ async def test_bench_assembly(tmp_path: Path) -> None:
     print(f"Status:          {'✓ PASS' if budget_met else '✗ FAIL'}")
     if not budget_met:
         print(f"Deviation:       +{deviation_pct:.2f}%")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # Advisory warning for significant deviation
     if deviation_pct > 25:

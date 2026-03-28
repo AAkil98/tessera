@@ -42,7 +42,7 @@ def benchmark_chunking_single(file_path: Path, file_size: int) -> dict[str, floa
     chunk_count = 0
     bytes_hashed = 0
 
-    for idx, chunk_data, leaf_hash in chunker.chunk(file_path):
+    for _idx, chunk_data, _leaf_hash in chunker.chunk(file_path):
         chunk_count += 1
         bytes_hashed += len(chunk_data)
 
@@ -71,9 +71,9 @@ def test_bench_chunking(tmp_path: Path) -> None:
         ("1GB", SIZE_1GB),
     ]
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Chunking Throughput Benchmark")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     for name, size in test_files:
         print(f"\nPreparing {name} test file...")
@@ -133,9 +133,11 @@ def test_bench_chunking(tmp_path: Path) -> None:
     results_file = tmp_path / "bench_chunking_results.json"
     results_file.write_text(json.dumps(aggregate, indent=2))
 
-    print(f"\n{'='*60}")
-    print(f"Summary: {sum(1 for r in results if r['budget_met'])}/{len(results)} passed")
-    print(f"{'='*60}\n")
+    print(f"\n{'=' * 60}")
+    print(
+        f"Summary: {sum(1 for r in results if r['budget_met'])}/{len(results)} passed"
+    )
+    print(f"{'=' * 60}\n")
 
     # Advisory warnings for significant deviations
     for result in results:

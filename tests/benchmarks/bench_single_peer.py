@@ -62,13 +62,13 @@ class LocalPeerSource:
 @pytest.mark.slow
 async def test_bench_single_peer(tmp_path: Path) -> None:
     """Measure end-to-end single-peer transfer throughput."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Single Peer Transfer Benchmark")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Create test file
     file_size = SIZE_50MB
-    print(f"\nPreparing {file_size // (1024*1024)} MB test file...")
+    print(f"\nPreparing {file_size // (1024 * 1024)} MB test file...")
     src_dir = tmp_path / "seeder"
     src_dir.mkdir()
     src_file = src_dir / "test.bin"
@@ -106,7 +106,7 @@ async def test_bench_single_peer(tmp_path: Path) -> None:
     )
 
     # Benchmark fetch
-    print(f"Fetching {file_size // (1024*1024)} MB...")
+    print(f"Fetching {file_size // (1024 * 1024)} MB...")
     start = time.perf_counter()
     output_path = await fetcher.fetch(manifest_hash)
     end = time.perf_counter()
@@ -119,9 +119,9 @@ async def test_bench_single_peer(tmp_path: Path) -> None:
     output_data = output_path.read_bytes()
     src_data = src_file.read_bytes()
     assert len(output_data) == len(src_data), "Size mismatch"
-    assert (
-        hashlib.sha256(output_data).digest() == hashlib.sha256(src_data).digest()
-    ), "Hash mismatch"
+    assert hashlib.sha256(output_data).digest() == hashlib.sha256(src_data).digest(), (
+        "Hash mismatch"
+    )
 
     # Calculate efficiency
     # Note: Since we're using LocalPeerSource (no MFP), we can't measure
@@ -157,8 +157,8 @@ async def test_bench_single_peer(tmp_path: Path) -> None:
     results_file.write_text(json.dumps(result, indent=2))
 
     # Print summary
-    print(f"\n{'='*60}")
-    print(f"File size:        {file_size // (1024*1024)} MB")
+    print(f"\n{'=' * 60}")
+    print(f"File size:        {file_size // (1024 * 1024)} MB")
     print(f"Elapsed:          {elapsed_s:.3f} s")
     print(f"Throughput:       {throughput_mbps:.2f} MB/s")
     print(f"Efficiency:       {efficiency_pct:.2f}%")
@@ -166,7 +166,7 @@ async def test_bench_single_peer(tmp_path: Path) -> None:
     print(f"Overhead budget:  ≤{OVERHEAD_BUDGET_PCT}%")
     print(f"Status:           {'✓ PASS' if budget_met else '✗ FAIL'}")
     print("\nNote: LocalPeerSource (no MFP). Baseline = theoretical SSD I/O.")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # Advisory warning
     if overhead_pct > OVERHEAD_BUDGET_PCT * 1.25:

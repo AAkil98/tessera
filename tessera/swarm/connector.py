@@ -140,9 +140,7 @@ class PeerConnector:
         try:
             entry = self._registry.get(manifest_hash)
         except Exception:
-            return AdmissionResult(
-                success=False, reason="swarm not found"
-            )
+            return AdmissionResult(success=False, reason="swarm not found")
 
         if len(entry.peers) >= self._max_peers:
             return AdmissionResult(
@@ -168,9 +166,7 @@ class PeerConnector:
                 peer_agent_id[:4].hex(),
                 exc_info=True,
             )
-            return AdmissionResult(
-                success=False, reason="channel establishment failed"
-            )
+            return AdmissionResult(success=False, reason="channel establishment failed")
 
         # Create session state machine.
         session = PeerSession(peer_id=peer_agent_id)
@@ -228,9 +224,7 @@ class PeerConnector:
     # Message routing
     # ------------------------------------------------------------------
 
-    def on_receive(
-        self, manifest_hash: bytes, channel_id: bytes, msg: Message
-    ) -> None:
+    def on_receive(self, manifest_hash: bytes, channel_id: bytes, msg: Message) -> None:
         """Validate an incoming message against the session state machine.
 
         Raises MessageError on protocol violations so the caller can send
@@ -283,9 +277,7 @@ class PeerConnector:
             return False
         return self._scorer.should_evict(agent_id)
 
-    def candidate_for_displacement(
-        self, manifest_hash: bytes
-    ) -> bytes | None:
+    def candidate_for_displacement(self, manifest_hash: bytes) -> bytes | None:
         """Return the lowest-scoring peer below eviction_threshold, or None."""
         entry = self._registry.get(manifest_hash)
         eligible = [

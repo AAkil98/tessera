@@ -135,9 +135,7 @@ async def test_truncated_piece_raises_integrity_error(tmp_path: Path) -> None:
     seeder, mh = await _publish(small(), pub)
 
     async with TesseraNode(_config(fetch_dir)) as leecher:
-        leecher._test_piece_provider = TruncatedPieceSource(
-            seeder._ms, seeder._ts, mh
-        )
+        leecher._test_piece_provider = TruncatedPieceSource(seeder._ms, seeder._ts, mh)
         with pytest.raises(IntegrityError):
             await leecher.fetch(mh, output_path=fetch_dir / "out.bin")
 
@@ -153,10 +151,8 @@ async def test_peer_exception_propagates_as_tessera_error(tmp_path: Path) -> Non
     seeder, mh = await _publish(small(), pub)
 
     async with TesseraNode(_config(fetch_dir)) as leecher:
-        leecher._test_piece_provider = ExplodingPieceSource(
-            seeder._ms, seeder._ts, mh
-        )
-        with pytest.raises(Exception):
+        leecher._test_piece_provider = ExplodingPieceSource(seeder._ms, seeder._ts, mh)
+        with pytest.raises(TesseraError):
             await leecher.fetch(mh, output_path=fetch_dir / "out.bin")
 
 

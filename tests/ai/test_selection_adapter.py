@@ -21,7 +21,9 @@ class MockClient:
         return self._response
 
 
-def _make_strategy(response: str, tessera_count: int = 4) -> tuple[AISelectionStrategy, MockClient]:
+def _make_strategy(
+    response: str, tessera_count: int = 4
+) -> tuple[AISelectionStrategy, MockClient]:
     client = MockClient(response)
     bridge = IntelligenceBridge(client=client)
     strategy = AISelectionStrategy(
@@ -57,7 +59,9 @@ async def test_selection_hint_only_once(tmp_path: None) -> None:
 @pytest.mark.asyncio
 async def test_selection_hint_filters_out_of_range(tmp_path: None) -> None:
     """Tessera indices outside [0, tessera_count) must be dropped."""
-    strategy, _ = _make_strategy(json.dumps([99, 0, 2]))  # 99 is out of range for count=4
+    strategy, _ = _make_strategy(
+        json.dumps([99, 0, 2])
+    )  # 99 is out of range for count=4
     await strategy.fetch_hint()
     result = strategy.prioritize({0, 1, 2, 3})
     assert 99 not in result

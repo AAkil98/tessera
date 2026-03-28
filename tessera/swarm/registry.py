@@ -22,9 +22,7 @@ class SwarmNotFoundError(TesseraError):
     """Raised when a swarm lookup fails."""
 
     def __init__(self, manifest_hash: bytes) -> None:
-        super().__init__(
-            f"swarm not found: {manifest_hash[:8].hex()}..."
-        )
+        super().__init__(f"swarm not found: {manifest_hash[:8].hex()}...")
         self.manifest_hash = manifest_hash
 
 
@@ -43,7 +41,7 @@ class PeerInfo:
 
     agent_id: bytes
     channel_id: bytes
-    role: str          # "seeder" | "leecher"
+    role: str  # "seeder" | "leecher"
     connected_at: float = field(default_factory=time.monotonic)
     score: float = 0.5
 
@@ -54,7 +52,7 @@ class SwarmEntry:
 
     manifest_hash: bytes
     state: SwarmState
-    role: str          # "seeder" | "leecher" — our local role
+    role: str  # "seeder" | "leecher" — our local role
     peers: dict[bytes, PeerInfo] = field(default_factory=dict)
     blocklist: set[bytes] = field(default_factory=set)
     created_at: float = field(default_factory=time.monotonic)
@@ -82,9 +80,7 @@ class SwarmRegistry:
             ValueError: If a swarm for this manifest_hash already exists.
         """
         if manifest_hash in self._swarms:
-            raise ValueError(
-                f"swarm already exists for {manifest_hash[:8].hex()}"
-            )
+            raise ValueError(f"swarm already exists for {manifest_hash[:8].hex()}")
         entry = SwarmEntry(
             manifest_hash=manifest_hash,
             state=SwarmState.PENDING,
@@ -103,9 +99,7 @@ class SwarmRegistry:
             raise SwarmNotFoundError(manifest_hash)
         return self._swarms[manifest_hash]
 
-    def transition(
-        self, manifest_hash: bytes, new_state: SwarmState
-    ) -> SwarmEntry:
+    def transition(self, manifest_hash: bytes, new_state: SwarmState) -> SwarmEntry:
         """Advance the swarm to *new_state*.
 
         Raises:
@@ -143,9 +137,7 @@ class SwarmRegistry:
         if entry.state == SwarmState.PENDING and entry.peers:
             entry.state = SwarmState.ACTIVE
 
-    def remove_peer(
-        self, manifest_hash: bytes, agent_id: bytes
-    ) -> PeerInfo | None:
+    def remove_peer(self, manifest_hash: bytes, agent_id: bytes) -> PeerInfo | None:
         """Remove and return the peer entry, or None if not present."""
         entry = self._swarms.get(manifest_hash)
         if entry is None:
@@ -156,9 +148,7 @@ class SwarmRegistry:
         """Add *agent_id* to the per-swarm blocklist."""
         self.get(manifest_hash).blocklist.add(agent_id)
 
-    def is_blocklisted(
-        self, manifest_hash: bytes, agent_id: bytes
-    ) -> bool:
+    def is_blocklisted(self, manifest_hash: bytes, agent_id: bytes) -> bool:
         entry = self._swarms.get(manifest_hash)
         return entry is not None and agent_id in entry.blocklist
 

@@ -22,6 +22,7 @@ def _config(d: Path) -> TesseraConfig:
 # Mock client
 # ---------------------------------------------------------------------------
 
+
 class MockClient:
     """Returns a preset JSON string from generate()."""
 
@@ -37,6 +38,7 @@ class MockClient:
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_discovery_returns_empty_when_bridge_inactive(tmp_path: Path) -> None:
@@ -67,9 +69,15 @@ async def test_discovery_adapter_returns_matching_result(tmp_path: Path) -> None
         mh2 = await node.publish(pub / "data.bin", metadata={"name": "Q3 Report"})
         ms = node._ms
 
-        response_payload = json.dumps([
-            {"manifest_hash": mh2.hex(), "relevance_score": 0.95, "reason": "name matches"}
-        ])
+        response_payload = json.dumps(
+            [
+                {
+                    "manifest_hash": mh2.hex(),
+                    "relevance_score": 0.95,
+                    "reason": "name matches",
+                }
+            ]
+        )
         client = MockClient(response_payload)
         bridge = IntelligenceBridge(client=client)
         adapter = DiscoveryAdapter(bridge, ms)
@@ -93,9 +101,15 @@ async def test_discovery_adapter_rejects_hallucinated_hashes(tmp_path: Path) -> 
         ms = node._ms
 
         fake_hex = "a" * 64  # fabricated hash not in index
-        response_payload = json.dumps([
-            {"manifest_hash": fake_hex, "relevance_score": 0.99, "reason": "hallucinated"}
-        ])
+        response_payload = json.dumps(
+            [
+                {
+                    "manifest_hash": fake_hex,
+                    "relevance_score": 0.99,
+                    "reason": "hallucinated",
+                }
+            ]
+        )
         client = MockClient(response_payload)
         bridge = IntelligenceBridge(client=client)
         adapter = DiscoveryAdapter(bridge, ms)
@@ -145,4 +159,135 @@ async def test_discovery_adapter_sanitizes_query_before_llm(tmp_path: Path) -> N
     # The prompt sent to the LLM must not contain the raw injection payload.
     assert client.calls, "generate() should have been called"
     prompt = client.calls[0]
-    assert "ignore all previous instructions" not in prompt.lower() or "[filtered]" in prompt
+    assert (
+        "ignore all previous instructions" not in prompt.lower()
+        or "[filtered]" in prompt
+    )
+
+
+# ---------------------------------------------------------------------------
+# Additional coverage
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_query_empty_index_returns_empty(tmp_path: Path) -> None:
+    """An empty ManifestStore (no published manifests) yields []."""
+    pub = tmp_path / "pub"
+    pub.mkdir()
+
+    # Open a node but do NOT publish anything — the manifest store is empty.
+    async with TesseraNode(_config(pub)) as node:
+        ms = node._ms
+
+        response_payload = json.dumps(
+            [{"manifest_hash": "bb" * 32, "relevance_score": 0.8, "reason": "guess"}]
+        )
+        client = MockClient(response_payload)
+        bridge = IntelligenceBridge(client=client)
+        adapter = DiscoveryAdapter(bridge, ms)
+
+        results = await adapter.query("anything")
+
+    assert results == []
+    # generate() should never have been called because _build_index() is empty.
+    assert client.calls == []
+
+
+@pytest.mark.asyncio
+async def test_query_bridge_inactive_returns_empty(tmp_path: Path) -> None:
+    """When the bridge has client=None, query() returns [] immediately."""
+    pub = tmp_path / "pub"
+    pub.mkdir()
+    (pub / "data.bin").write_bytes(tiny())
+
+    async with TesseraNode(_config(pub)) as node:
+        await node.publish(pub / "data.bin", metadata={"name": "Report"})
+        ms = node._ms
+
+        bridge = IntelligenceBridge(client=None)
+        assert not bridge.active
+        adapter = DiscoveryAdapter(bridge, ms)
+
+        results = await adapter.query("anything")
+
+    assert results == []
+
+
+@pytest.mark.asyncio
+async def test_build_index_includes_metadata_fields(tmp_path: Path) -> None:
+    """_build_index() entries must include hash, name, description, and mime."""
+    pub = tmp_path / "pub"
+    pub.mkdir()
+    (pub / "data.bin").write_bytes(tiny())
+
+    async with TesseraNode(_config(pub)) as node:
+        mh = await node.publish(
+            pub / "data.bin",
+            metadata={
+                "name": "Q3 Report",
+                "description": "Quarterly financials",
+                "mime": "application/pdf",
+            },
+        )
+        ms = node._ms
+
+        bridge = IntelligenceBridge(client=None)
+        adapter = DiscoveryAdapter(bridge, ms)
+        index = adapter._build_index()
+
+    assert len(index) >= 1
+    entry = next(e for e in index if e["hash"] == mh.hex())
+    assert entry["hash"] == mh.hex()
+    assert entry["name"] == "Q3 Report"
+    assert entry["description"] == "Quarterly financials"
+    assert entry["mime"] == "application/pdf"
+
+
+@pytest.mark.asyncio
+async def test_query_max_results_respected(tmp_path: Path) -> None:
+    """max_results=1 must cap the returned list even when the bridge returns more."""
+    pub = tmp_path / "pub"
+    pub.mkdir()
+
+    # Publish three distinct files so we have three manifest hashes.
+    hashes: list[bytes] = []
+    for i in range(3):
+        fname = pub / f"file{i}.bin"
+        fname.write_bytes(tiny() + i.to_bytes(1, "big"))
+        async with TesseraNode(_config(pub)) as node:
+            mh = await node.publish(fname, metadata={"name": f"File {i}"})
+            hashes.append(mh)
+            if i == 2:
+                ms = node._ms
+
+    # Re-open a single node with all three manifests present.
+    async with TesseraNode(_config(pub)) as node:
+        for i, fname in enumerate([pub / f"file{i}.bin" for i in range(3)]):
+            await node.publish(fname, metadata={"name": f"File {i}"})
+        ms = node._ms
+
+        # Mock the LLM returning all three matches.
+        index_hashes = [
+            e["hash"]
+            for e in DiscoveryAdapter(
+                IntelligenceBridge(client=None), ms
+            )._build_index()
+        ]
+        response_payload = json.dumps(
+            [
+                {
+                    "manifest_hash": h,
+                    "relevance_score": round(0.9 - i * 0.1, 2),
+                    "reason": f"match {i}",
+                }
+                for i, h in enumerate(index_hashes)
+            ]
+        )
+        client = MockClient(response_payload)
+        bridge = IntelligenceBridge(client=client)
+        adapter = DiscoveryAdapter(bridge, ms)
+
+        results = await adapter.query("all files", max_results=1)
+
+    assert len(results) == 1

@@ -18,7 +18,9 @@ if TYPE_CHECKING:
 class DiscoveryAdapter:
     """Wraps IntelligenceBridge.discover() and manages the manifest index."""
 
-    def __init__(self, bridge: IntelligenceBridge, manifest_store: ManifestStore) -> None:
+    def __init__(
+        self, bridge: IntelligenceBridge, manifest_store: ManifestStore
+    ) -> None:
         self._bridge = bridge
         self._ms = manifest_store
 

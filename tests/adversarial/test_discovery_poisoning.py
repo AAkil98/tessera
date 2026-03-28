@@ -159,7 +159,7 @@ async def test_poisoned_discovery_does_not_write_output(tmp_path: Path) -> None:
 
     fetch_dir = tmp_path / "fetch"
     fetch_dir.mkdir()
-    fake_mh = b"\xFF" * 32
+    fake_mh = b"\xff" * 32
     out_path = fetch_dir / "out.bin"
 
     async with TesseraNode(_config(fetch_dir)) as leecher:

@@ -33,13 +33,13 @@ def get_hardware_context() -> dict[str, str]:
 @pytest.mark.slow
 async def test_bench_publish_latency(tmp_path: Path) -> None:
     """Measure publish latency for 100 MB file."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Publish Latency Benchmark")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Create test file
     file_size = SIZE_100MB
-    print(f"\nGenerating {file_size // (1024*1024)} MB test file...")
+    print(f"\nGenerating {file_size // (1024 * 1024)} MB test file...")
     test_file = tmp_path / "test.bin"
     test_file.write_bytes(make_bytes(file_size))
 
@@ -53,7 +53,7 @@ async def test_bench_publish_latency(tmp_path: Path) -> None:
     await node.start()
 
     # Benchmark publish
-    print(f"Publishing {file_size // (1024*1024)} MB file...")
+    print(f"Publishing {file_size // (1024 * 1024)} MB file...")
     start = time.perf_counter()
     manifest_hash = await node.publish(
         test_file,
@@ -96,8 +96,8 @@ async def test_bench_publish_latency(tmp_path: Path) -> None:
     results_file.write_text(json.dumps(result, indent=2))
 
     # Print summary
-    print(f"\n{'='*60}")
-    print(f"File size:       {file_size // (1024*1024)} MB")
+    print(f"\n{'=' * 60}")
+    print(f"File size:       {file_size // (1024 * 1024)} MB")
     print(f"Elapsed:         {elapsed_ms:.2f} ms ({elapsed_s:.3f} s)")
     print(f"Throughput:      {throughput_mbps:.2f} MB/s")
     print(f"Manifest hash:   {manifest_hash.hex()[:16]}...")
@@ -105,7 +105,7 @@ async def test_bench_publish_latency(tmp_path: Path) -> None:
     print(f"Status:          {'✓ PASS' if budget_met else '✗ FAIL'}")
     if not budget_met:
         print(f"Deviation:       +{deviation_pct:.2f}%")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # Advisory warning for significant deviation
     if deviation_pct > 25:

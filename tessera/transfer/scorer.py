@@ -100,9 +100,9 @@ class _PeerState:
 
     def update_failure_rate(self) -> None:
         if self._window:
-            self.metrics.failure_rate = sum(
-                1 for v in self._window if not v
-            ) / len(self._window)
+            self.metrics.failure_rate = sum(1 for v in self._window if not v) / len(
+                self._window
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -152,9 +152,7 @@ class PeerScorer:
     # Peer lifecycle
     # ------------------------------------------------------------------
 
-    def add_peer(
-        self, peer_id: bytes, *, low_trust: bool = False
-    ) -> None:
+    def add_peer(self, peer_id: bytes, *, low_trust: bool = False) -> None:
         """Register a new peer with an initial score of 0.5 (or 0.3 for low trust)."""
         initial = _LOW_TRUST_INITIAL_SCORE if low_trust else _DEFAULT_INITIAL_SCORE
         self._peers[peer_id] = _PeerState(
@@ -180,8 +178,7 @@ class PeerScorer:
         state = self._peers[peer_id]
         # EMA update for latency.
         state.metrics.latency_ms = (
-            _EMA_ALPHA * latency_ms
-            + (1.0 - _EMA_ALPHA) * state.metrics.latency_ms
+            _EMA_ALPHA * latency_ms + (1.0 - _EMA_ALPHA) * state.metrics.latency_ms
         )
         # Sliding window: record success.
         state._window.append(True)

@@ -106,7 +106,11 @@ async def test_corrupt_piece_detected_at_assembly(tmp_path: Path) -> None:
             return await publisher._manifest_store.read(mh)  # type: ignore[union-attr]
 
         async def get_piece(self, index: int) -> bytes | None:
-            return p.read_bytes() if index == 2 else await publisher._tessera_store.read(mh, index)  # type: ignore[union-attr]
+            return (
+                p.read_bytes()
+                if index == 2
+                else await publisher._tessera_store.read(mh, index)
+            )  # type: ignore[union-attr]
 
     fet = tmp_path / "fetcher"
     async with TesseraNode(_config(fet)) as fetcher:

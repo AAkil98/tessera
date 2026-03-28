@@ -22,8 +22,7 @@ log = logging.getLogger(__name__)
 class BaseAgentClient(Protocol):
     """Minimal interface expected from a madakit agent client."""
 
-    async def generate(self, prompt: str, **kwargs: Any) -> str:
-        ...
+    async def generate(self, prompt: str, **kwargs: Any) -> str: ...
 
 
 @dataclass
@@ -114,7 +113,7 @@ class IntelligenceBridge:
             "System: You are a file search assistant. Given a user query and a list "
             "of available files with their metadata, return the manifest hashes of "
             "files that best match the query. Return results as a JSON array of "
-            'objects with fields: manifest_hash (hex string), relevance_score '
+            "objects with fields: manifest_hash (hex string), relevance_score "
             "(0.0-1.0), reason (brief explanation). Return an empty array if "
             "nothing matches.\n\n"
             f'User: Query: "{safe_query}"\n\nAvailable files:\n{entries_text}'
@@ -131,7 +130,8 @@ class IntelligenceBridge:
             # Validate: keep only hashes present in the index.
             known = {e["hash"] for e in manifest_index}
             validated = [
-                r for r in results
+                r
+                for r in results
                 if isinstance(r, dict) and r.get("manifest_hash") in known
             ]
             validated.sort(key=lambda r: r.get("relevance_score", 0.0), reverse=True)
@@ -180,10 +180,14 @@ class IntelligenceBridge:
             if not isinstance(indices, list):
                 return None
             # Validate: keep only in-range integers.
-            valid = [i for i in indices if isinstance(i, int) and 0 <= i < tessera_count]
+            valid = [
+                i for i in indices if isinstance(i, int) and 0 <= i < tessera_count
+            ]
             return SelectionHint(priority_indices=valid) if valid else None
         except Exception as exc:
-            log.warning("IntelligenceBridge: get_selection_hint() parse failed: %s", exc)
+            log.warning(
+                "IntelligenceBridge: get_selection_hint() parse failed: %s", exc
+            )
             return None
 
     # ------------------------------------------------------------------
@@ -216,7 +220,7 @@ class IntelligenceBridge:
             "System: You are a peer-to-peer transfer optimizer. Given a list of "
             "peers and their performance metrics, suggest an optimal preference "
             "ordering. Consider reliability, speed, and load distribution. Return a "
-            'JSON object with fields: ranked_peers (array of agent_id hex strings '
+            "JSON object with fields: ranked_peers (array of agent_id hex strings "
             "in preferred order), confidence (0.0-1.0).\n\n"
             f"User: Transfer: {safe_name} ({progress_pct:.1f}% complete)\n"
             f"Peers:\n{peers_text}"

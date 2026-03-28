@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import contextlib
 import json
 import logging
 import signal
@@ -68,6 +69,7 @@ def _exit_code_for(exc: Exception) -> int:
 # ---------------------------------------------------------------------------
 # Output helpers
 # ---------------------------------------------------------------------------
+
 
 def _emit(obj: Any, *, as_json: bool) -> None:
     """Print *obj* as JSON or a human-readable string."""
@@ -121,11 +123,9 @@ def _fmt_eta(seconds: float | None) -> str:
 # Config construction from parsed args
 # ---------------------------------------------------------------------------
 
+
 def _build_config(args: argparse.Namespace) -> TesseraConfig:
-    if args.config:
-        cfg = TesseraConfig.from_toml(Path(args.config))
-    else:
-        cfg = TesseraConfig()
+    cfg = TesseraConfig.from_toml(Path(args.config)) if args.config else TesseraConfig()
 
     overrides: dict[str, Any] = {}
     if getattr(args, "data_dir", None):
@@ -146,6 +146,7 @@ def _build_config(args: argparse.Namespace) -> TesseraConfig:
 # ---------------------------------------------------------------------------
 # Command implementations
 # ---------------------------------------------------------------------------
+
 
 async def _cmd_publish(args: argparse.Namespace) -> int:
     cfg = _build_config(args)
@@ -171,10 +172,8 @@ async def _cmd_publish(args: argparse.Namespace) -> int:
         stop_event.set()
 
     for sig in (signal.SIGINT, signal.SIGTERM):
-        try:
+        with contextlib.suppress(NotImplementedError, OSError):
             loop.add_signal_handler(sig, _handle_signal)
-        except (NotImplementedError, OSError):
-            pass  # Windows
 
     try:
         async with TesseraNode(cfg) as node:
@@ -355,8 +354,10 @@ async def _cmd_status(args: argparse.Namespace) -> int:
             _emit(_status_dict(result), as_json=True)
     else:
         if isinstance(result, NodeStatus):
-            print(f"Active swarms: {result.active_swarms} / "
-                  f"{result.active_swarms + result.capacity_remaining}")
+            print(
+                f"Active swarms: {result.active_swarms} / "
+                f"{result.active_swarms + result.capacity_remaining}"
+            )
             if result.ai:
                 ai_s = "active" if result.ai.active else "inactive"
                 print(f"AI:            {ai_s}")
@@ -364,19 +365,25 @@ async def _cmd_status(args: argparse.Namespace) -> int:
             if not result:
                 print("No active swarms.")
             else:
-                print(f"{'Hash':<20}  {'State':<10}  {'Progress':>10}  {'Peers':>5}  Throughput")
+                print(
+                    f"{'Hash':<20}  {'State':<10}  {'Progress':>10}  {'Peers':>5}  Throughput"
+                )
                 for s in result:
                     h = s.manifest_hash.hex()[:16] + "..."
                     pct = f"{s.progress * 100:.1f}%"
                     tput = _fmt_throughput(s.throughput_bps)
-                    print(f"{h:<20}  {s.state.name:<10}  {pct:>10}  {len(s.peers):>5}  {tput}")
+                    print(
+                        f"{h:<20}  {s.state.name:<10}  {pct:>10}  {len(s.peers):>5}  {tput}"
+                    )
         else:
             assert isinstance(result, TransferStatus)
             s = result
             progress_pct = s.progress * 100
             print(f"Mosaic:     {s.manifest_hash.hex()[:16]}...")
             print(f"State:      {s.state.name}")
-            print(f"Progress:   {s.tesserae_verified} / {s.tesserae_total} ({progress_pct:.1f}%)")
+            print(
+                f"Progress:   {s.tesserae_verified} / {s.tesserae_total} ({progress_pct:.1f}%)"
+            )
             print(f"Peers:      {len(s.peers)}")
             print(f"Throughput: {_fmt_throughput(s.throughput_bps)}")
             print(f"ETA:        {_fmt_eta(s.eta_seconds)}")
@@ -408,10 +415,15 @@ async def _cmd_cancel(args: argparse.Namespace) -> int:
     try:
         async with TesseraNode(cfg) as node:
             if not as_json:
-                print(f"Cancelling {args.manifest_hash[:16]}... — draining in-flight pieces...")
+                print(
+                    f"Cancelling {args.manifest_hash[:16]}... — draining in-flight pieces..."
+                )
             await node.cancel(mh)
             if as_json:
-                _emit({"manifest_hash": args.manifest_hash, "status": "cancelled"}, as_json=True)
+                _emit(
+                    {"manifest_hash": args.manifest_hash, "status": "cancelled"},
+                    as_json=True,
+                )
             else:
                 print("Cancelled.")
     except TesseraError as exc:
@@ -425,27 +437,36 @@ async def _cmd_cancel(args: argparse.Namespace) -> int:
 # Argument parser
 # ---------------------------------------------------------------------------
 
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="tessera",
         description="Secure peer-to-peer file sharing",
     )
     parser.add_argument(
-        "--version", action="version", version=f"tessera {__version__}",
+        "--version",
+        action="version",
+        version=f"tessera {__version__}",
     )
 
     # Global options
     parser.add_argument("--config", metavar="PATH", help="TOML config file")
-    parser.add_argument("--data-dir", metavar="PATH", help="Storage root (default: ~/.tessera)")
+    parser.add_argument(
+        "--data-dir", metavar="PATH", help="Storage root (default: ~/.tessera)"
+    )
     parser.add_argument("--bind", metavar="HOST:PORT", help="MFP bind address")
-    parser.add_argument("--tracker", metavar="URL", action="append", help="Tracker URL (repeatable)")
+    parser.add_argument(
+        "--tracker", metavar="URL", action="append", help="Tracker URL (repeatable)"
+    )
     parser.add_argument(
         "--log-level",
         choices=["debug", "info", "warning", "error"],
         default="info",
         help="Logging verbosity",
     )
-    parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
+    parser.add_argument(
+        "--json", action="store_true", help="Emit machine-readable JSON"
+    )
 
     sub = parser.add_subparsers(dest="command", metavar="command")
     sub.required = True
@@ -454,32 +475,42 @@ def _build_parser() -> argparse.ArgumentParser:
     p_pub = sub.add_parser("publish", help="Publish a file and begin seeding")
     p_pub.add_argument("file", metavar="FILE", help="Path to the file to publish")
     p_pub.add_argument(
-        "--meta", metavar="KEY=VALUE", action="append",
+        "--meta",
+        metavar="KEY=VALUE",
+        action="append",
         help="Metadata key=value pair (repeatable)",
     )
     p_pub.add_argument("--skip-moderation", action="store_true")
 
     # fetch
     p_fetch = sub.add_parser("fetch", help="Download a mosaic by manifest hash")
-    p_fetch.add_argument("manifest_hash", metavar="HASH", help="64-char hex manifest hash")
+    p_fetch.add_argument(
+        "manifest_hash", metavar="HASH", help="64-char hex manifest hash"
+    )
     p_fetch.add_argument("--output", metavar="PATH", help="Output file path")
     p_fetch.add_argument("--skip-moderation", action="store_true")
 
     # query
-    p_query = sub.add_parser("query", help="Natural-language mosaic search (requires AI)")
+    p_query = sub.add_parser(
+        "query", help="Natural-language mosaic search (requires AI)"
+    )
     p_query.add_argument("text", metavar="TEXT", help="Search query")
     p_query.add_argument("--max-results", type=int, default=10, metavar="N")
 
     # status
     p_status = sub.add_parser("status", help="Show transfer or node status")
     p_status.add_argument(
-        "manifest_hash", nargs="?", metavar="HASH",
+        "manifest_hash",
+        nargs="?",
+        metavar="HASH",
         help="Optional: hex manifest hash for a specific mosaic",
     )
 
     # cancel
     p_cancel = sub.add_parser("cancel", help="Cancel an active transfer")
-    p_cancel.add_argument("manifest_hash", metavar="HASH", help="64-char hex manifest hash")
+    p_cancel.add_argument(
+        "manifest_hash", metavar="HASH", help="64-char hex manifest hash"
+    )
 
     return parser
 

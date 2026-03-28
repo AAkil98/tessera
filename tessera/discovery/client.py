@@ -71,9 +71,7 @@ class DiscoveryClient:
         """Announce to all backends concurrently."""
         from typing import Literal
 
-        r: Literal["seeder", "leecher"] = (
-            "seeder" if role == "seeder" else "leecher"
-        )
+        r: Literal["seeder", "leecher"] = "seeder" if role == "seeder" else "leecher"
         await asyncio.gather(
             *[b.announce(manifest_hash, agent_id, r) for b in self._backends],
             return_exceptions=True,
@@ -124,9 +122,7 @@ class DiscoveryClient:
                 trust = TrustLevel.MEDIUM
             else:
                 trust = TrustLevel.LOW
-            ranked.append(
-                RankedPeer(record=best, trust=trust, corroborated_by=count)
-            )
+            ranked.append(RankedPeer(record=best, trust=trust, corroborated_by=count))
 
         # Sort: HIGH → MEDIUM → LOW, then seeders before leechers, then recency.
         _trust_order = {TrustLevel.HIGH: 0, TrustLevel.MEDIUM: 1, TrustLevel.LOW: 2}

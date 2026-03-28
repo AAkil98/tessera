@@ -73,8 +73,7 @@ class CapacityEnforcer:
         candidates = [
             pid
             for pid in entry.peers
-            if scorer.has_peer(pid)
-            and scorer.score(pid) < self._eviction_threshold
+            if scorer.has_peer(pid) and scorer.score(pid) < self._eviction_threshold
         ]
         if not candidates:
             return None

@@ -43,7 +43,7 @@ class TransferState:
 
     version: int = 1
     manifest_hash: bytes = field(default_factory=bytes)
-    role: str = "fetcher"        # "seeder" | "fetcher"
+    role: str = "fetcher"  # "seeder" | "fetcher"
     tessera_count: int = 0
     _bitfield_b64: str = field(default="", repr=False)
     created_at: str = field(default_factory=_utcnow)
@@ -107,8 +107,7 @@ class TransferState:
             updated_at=str(d.get("updated_at", "")),
             bytes_downloaded=int(d.get("bytes_downloaded", 0)),
             retry_counts={
-                str(k): int(v)
-                for k, v in (d.get("retry_counts") or {}).items()
+                str(k): int(v) for k, v in (d.get("retry_counts") or {}).items()
             },
             stuck_tesserae=[int(i) for i in (d.get("stuck_tesserae") or [])],
             peers_seen=[str(p) for p in (d.get("peers_seen") or [])],
@@ -171,16 +170,12 @@ def _write_state_sync(data_dir: Path, state: TransferState) -> None:
         raise
 
 
-async def read_state(
-    data_dir: Path, manifest_hash: bytes
-) -> TransferState | None:
+async def read_state(data_dir: Path, manifest_hash: bytes) -> TransferState | None:
     """Load a state file from disk; return None if missing or malformed."""
     return await asyncio.to_thread(_read_state_sync, data_dir, manifest_hash)
 
 
-def _read_state_sync(
-    data_dir: Path, manifest_hash: bytes
-) -> TransferState | None:
+def _read_state_sync(data_dir: Path, manifest_hash: bytes) -> TransferState | None:
     sp = state_path(data_dir, manifest_hash)
     if not sp.exists():
         return None

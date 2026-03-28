@@ -58,9 +58,7 @@ class PartitionDetector:
 
     def on_request_timeout(self, agent_id: bytes) -> None:
         """Record one request timeout for *agent_id*."""
-        self._timeout_counts[agent_id] = (
-            self._timeout_counts.get(agent_id, 0) + 1
-        )
+        self._timeout_counts[agent_id] = self._timeout_counts.get(agent_id, 0) + 1
 
     def dead_peers(self) -> list[bytes]:
         """Return agent_ids presumed dead (KEEP_ALIVE or timeout threshold)."""
@@ -68,9 +66,7 @@ class PartitionDetector:
         dead: list[bytes] = []
         for agent_id, last in self._last_seen.items():
             ka_dead = (now - last) >= self._ka_timeout
-            timeout_dead = (
-                self._timeout_counts.get(agent_id, 0) >= self._max_timeouts
-            )
+            timeout_dead = self._timeout_counts.get(agent_id, 0) >= self._max_timeouts
             if ka_dead or timeout_dead:
                 dead.append(agent_id)
         return dead

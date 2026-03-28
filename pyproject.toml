@@ -9,6 +9,21 @@ description = "Secure peer-to-peer file sharing built on MFP and madakit"
 requires-python = ">=3.11"
 license = {text = "Apache-2.0"}
 authors = [{name = "Akil Abderrahim"}]
+readme = "README.md"
+keywords = ["p2p", "file-sharing", "encryption", "mfp", "swarm", "ai", "distributed"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Communications :: File Sharing",
+    "Topic :: Security :: Cryptography",
+    "Topic :: System :: Networking",
+    "Typing :: Typed",
+]
 dependencies = [
     "pymfp>=1.0.0",
 ]
@@ -26,6 +41,13 @@ dev = [
     "madakit>=1.0.0",
     "httpx>=0.27",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Madahub-dev/tessera"
+Repository = "https://github.com/Madahub-dev/tessera.git"
+Documentation = "https://github.com/Madahub-dev/tessera/tree/main/specs"
+"Issue Tracker" = "https://github.com/Madahub-dev/tessera/issues"
+Changelog = "https://github.com/Madahub-dev/tessera/blob/main/CHANGELOG.md"
 
 [project.scripts]
 tessera = "tessera.cli:main"
@@ -81,6 +103,7 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+python_files = ["test_*.py", "bench_*.py"]
 addopts = "--tb=short -q"
 markers = [
     "unit: unit tests (no I/O, no MFP)",

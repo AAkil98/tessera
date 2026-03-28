@@ -22,9 +22,7 @@ async def test_parallel_tessera_writes(tmp_path: Path) -> None:
     n = 20
     data = b"x" * 1024
 
-    results = await asyncio.gather(
-        *[ts.write(_HASH_A, i, data) for i in range(n)]
-    )
+    results = await asyncio.gather(*[ts.write(_HASH_A, i, data) for i in range(n)])
     assert all(results)  # all newly written
     for i in range(n):
         assert tessera_path(tmp_path, _HASH_A, i).exists()
@@ -43,7 +41,7 @@ async def test_duplicate_write_idempotent(tmp_path: Path) -> None:
 
     r1 = await ts.write(_HASH_A, 0, data)
     r2 = await ts.write(_HASH_A, 0, data)
-    assert r1 is True   # first write succeeds
+    assert r1 is True  # first write succeeds
     assert r2 is False  # second write skipped
     assert (await ts.read(_HASH_A, 0)) == data
 

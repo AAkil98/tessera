@@ -104,9 +104,7 @@ class ManifestStore:
         self.index.add(manifest_hash, metadata)
         return manifest_hash
 
-    def _write_sync(
-        self, manifest_bytes: bytes
-    ) -> tuple[bytes, dict[str, str]]:
+    def _write_sync(self, manifest_bytes: bytes) -> tuple[bytes, dict[str, str]]:
         manifest_hash = hashlib.sha256(manifest_bytes).digest()
         target = manifest_path(self._data_dir, manifest_hash)
 
@@ -137,9 +135,7 @@ class ManifestStore:
             return None
         raw = target.read_bytes()
         if hashlib.sha256(raw).digest() != manifest_hash:
-            log.warning(
-                "Corrupt manifest %s — deleting", manifest_hash.hex()
-            )
+            log.warning("Corrupt manifest %s — deleting", manifest_hash.hex())
             target.unlink(missing_ok=True)
             return None
         return raw

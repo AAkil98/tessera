@@ -126,9 +126,7 @@ class RequestPipeline:
         """Return records whose elapsed time exceeds request_timeout."""
         now = time.monotonic()
         return [
-            r
-            for r in self._in_flight.values()
-            if now - r.issued_at >= self._timeout
+            r for r in self._in_flight.values() if now - r.issued_at >= self._timeout
         ]
 
     # ------------------------------------------------------------------
@@ -139,9 +137,7 @@ class RequestPipeline:
         return len(self._in_flight)
 
     def peer_in_flight_count(self, peer_id: bytes) -> int:
-        return sum(
-            1 for r in self._in_flight.values() if r.peer_id == peer_id
-        )
+        return sum(1 for r in self._in_flight.values() if r.peer_id == peer_id)
 
     def retry_count(self, index: int) -> int:
         return self._retry_counts.get(index, 0)

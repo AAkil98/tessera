@@ -36,14 +36,16 @@ _TYPE_REJECT: int = 0x07
 _TYPE_KEEP_ALIVE: int = 0x08
 
 # Struct formats (big-endian, body only — msg_type byte already consumed)
-_FMT_HANDSHAKE: str = "!H32sII"  # version(2) + manifest_hash(32) + tessera_count(4) + tessera_size(4)
-_FMT_INDEX: str = "!I"           # single u32 index
-_FMT_REJECT: str = "!BHI"        # rejected_type(1) + error_code(2) + context(4)
+_FMT_HANDSHAKE: str = (
+    "!H32sII"  # version(2) + manifest_hash(32) + tessera_count(4) + tessera_size(4)
+)
+_FMT_INDEX: str = "!I"  # single u32 index
+_FMT_REJECT: str = "!BHI"  # rejected_type(1) + error_code(2) + context(4)
 
 _SIZE_HANDSHAKE_BODY: int = struct.calcsize(_FMT_HANDSHAKE)  # 42
-_SIZE_HANDSHAKE: int = 1 + _SIZE_HANDSHAKE_BODY              # 43
-_SIZE_INDEX_MSG: int = 5   # msg_type(1) + index(4)
-_SIZE_REJECT: int = 8      # msg_type(1) + rejected_type(1) + error_code(2) + context(4)
+_SIZE_HANDSHAKE: int = 1 + _SIZE_HANDSHAKE_BODY  # 43
+_SIZE_INDEX_MSG: int = 5  # msg_type(1) + index(4)
+_SIZE_REJECT: int = 8  # msg_type(1) + rejected_type(1) + error_code(2) + context(4)
 
 
 # ---------------------------------------------------------------------------
@@ -58,7 +60,7 @@ class Handshake:
     MSG_TYPE: ClassVar[int] = _TYPE_HANDSHAKE
 
     version: int
-    manifest_hash: bytes   # 32 bytes
+    manifest_hash: bytes  # 32 bytes
     tessera_count: int
     tessera_size: int
 

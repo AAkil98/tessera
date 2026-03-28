@@ -23,6 +23,9 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Protocol
 
+from tessera.bridge.bridge import IntelligenceBridge
+from tessera.bridge.discovery_adapter import DiscoveryAdapter
+from tessera.bridge.moderation_adapter import ModerationAdapter
 from tessera.content.bitfield import Bitfield
 from tessera.content.chunker import Chunker
 from tessera.content.manifest import ManifestBuilder, ManifestParser
@@ -37,9 +40,6 @@ from tessera.swarm.registry import SwarmRegistry
 from tessera.transfer.assembler import Assembler
 from tessera.transfer.scorer import PeerScorer
 from tessera.transfer.verifier import PieceVerifier
-from tessera.bridge.bridge import IntelligenceBridge
-from tessera.bridge.discovery_adapter import DiscoveryAdapter
-from tessera.bridge.moderation_adapter import ModerationAdapter
 from tessera.types import (
     AIStatus,
     DiscoveryResult,
@@ -146,9 +146,7 @@ class TesseraNode:
         if self._config.tracker_urls:
             from tessera.discovery.tracker import TrackerBackend
 
-            backends = [
-                TrackerBackend(url) for url in self._config.tracker_urls
-            ]
+            backends = [TrackerBackend(url) for url in self._config.tracker_urls]
             self._discovery = DiscoveryClient(backends)
 
         self._started = True
@@ -158,12 +156,8 @@ class TesseraNode:
         for entry in self._registry.all_swarms():
             if entry.state in (SwarmState.PENDING, SwarmState.ACTIVE):
                 try:
-                    self._registry.transition(
-                        entry.manifest_hash, SwarmState.DRAINING
-                    )
-                    self._registry.transition(
-                        entry.manifest_hash, SwarmState.CLOSED
-                    )
+                    self._registry.transition(entry.manifest_hash, SwarmState.DRAINING)
+                    self._registry.transition(entry.manifest_hash, SwarmState.CLOSED)
                 except Exception:
                     pass
         self._started = False
@@ -342,7 +336,14 @@ class TesseraNode:
             if ts.exists(manifest_hash, i):
                 continue
 
-            data = await provider.get_piece(i)
+            try:
+                data = await provider.get_piece(i)
+            except TesseraError:
+                raise
+            except Exception as exc:
+                raise TesseraError(
+                    f"piece provider failed on piece {i}: {exc}"
+                ) from exc
             if data is None:
                 raise TesseraError(f"peer could not serve piece {i}")
 
@@ -357,9 +358,7 @@ class TesseraNode:
             bytes_received += len(data)
 
             if on_progress is not None:
-                on_progress(
-                    self._make_transfer_status(manifest_hash, info, i + 1)
-                )
+                on_progress(self._make_transfer_status(manifest_hash, info, i + 1))
 
         # Assemble and whole-file verify.
         assembler = Assembler(ts)
@@ -391,9 +390,7 @@ class TesseraNode:
                     file_size=info.file_size,
                     elapsed=elapsed,
                     peers_used=1,
-                    average_throughput=(
-                        bytes_received / max(elapsed, 1e-6)
-                    ),
+                    average_throughput=(bytes_received / max(elapsed, 1e-6)),
                 )
             )
 
@@ -427,9 +424,7 @@ class TesseraNode:
             if e.state in (SwarmState.PENDING, SwarmState.ACTIVE)
         ]
         if not active:
-            total_peers = sum(
-                len(e.peers) for e in self._registry.all_swarms()
-            )
+            total_peers = sum(len(e.peers) for e in self._registry.all_swarms())
             return NodeStatus(
                 agent_id=b"\x00" * 32,
                 active_swarms=0,
@@ -454,9 +449,7 @@ class TesseraNode:
             info = ManifestParser.parse(raw)
             ts = self._ts
             done = await ts.count(entry.manifest_hash)
-            statuses.append(
-                self._make_transfer_status(entry.manifest_hash, info, done)
-            )
+            statuses.append(self._make_transfer_status(entry.manifest_hash, info, done))
         return statuses
 
     # ------------------------------------------------------------------

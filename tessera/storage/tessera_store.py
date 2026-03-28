@@ -41,9 +41,7 @@ class TesseraStore:
     # Write
     # ------------------------------------------------------------------
 
-    async def write(
-        self, manifest_hash: bytes, index: int, data: bytes
-    ) -> bool:
+    async def write(self, manifest_hash: bytes, index: int, data: bytes) -> bool:
         """Write *data* as piece *index* for *manifest_hash*.
 
         Returns:
@@ -52,13 +50,9 @@ class TesseraStore:
         Uses write-to-tmp-then-rename for crash safety. If the target file
         already exists the write is skipped (handles endgame duplicates).
         """
-        return await asyncio.to_thread(
-            self._write_sync, manifest_hash, index, data
-        )
+        return await asyncio.to_thread(self._write_sync, manifest_hash, index, data)
 
-    def _write_sync(
-        self, manifest_hash: bytes, index: int, data: bytes
-    ) -> bool:
+    def _write_sync(self, manifest_hash: bytes, index: int, data: bytes) -> bool:
         target = tessera_path(self._data_dir, manifest_hash, index)
         if target.exists():
             return False
@@ -76,17 +70,11 @@ class TesseraStore:
     # Read
     # ------------------------------------------------------------------
 
-    async def read(
-        self, manifest_hash: bytes, index: int
-    ) -> bytes | None:
+    async def read(self, manifest_hash: bytes, index: int) -> bytes | None:
         """Return the raw piece bytes, or None if the piece is not on disk."""
-        return await asyncio.to_thread(
-            self._read_sync, manifest_hash, index
-        )
+        return await asyncio.to_thread(self._read_sync, manifest_hash, index)
 
-    def _read_sync(
-        self, manifest_hash: bytes, index: int
-    ) -> bytes | None:
+    def _read_sync(self, manifest_hash: bytes, index: int) -> bytes | None:
         target = tessera_path(self._data_dir, manifest_hash, index)
         if not target.exists():
             return None
@@ -118,13 +106,9 @@ class TesseraStore:
         The disk-derived bitfield is authoritative over any stored state —
         it reflects exactly which pieces are present after a crash.
         """
-        return await asyncio.to_thread(
-            self._rebuild_sync, manifest_hash, tessera_count
-        )
+        return await asyncio.to_thread(self._rebuild_sync, manifest_hash, tessera_count)
 
-    def _rebuild_sync(
-        self, manifest_hash: bytes, tessera_count: int
-    ) -> Bitfield:
+    def _rebuild_sync(self, manifest_hash: bytes, tessera_count: int) -> Bitfield:
         bf = Bitfield(tessera_count)
         td = tessera_dir(self._data_dir, manifest_hash)
         if not td.exists():
@@ -174,9 +158,7 @@ class TesseraStore:
 
         with open(output_path, "wb") as out:
             for i in range(manifest_info.tessera_count):
-                data = tessera_path(
-                    self._data_dir, manifest_hash, i
-                ).read_bytes()
+                data = tessera_path(self._data_dir, manifest_hash, i).read_bytes()
                 out.write(data)
 
         # Level-3 verification: re-read and hash each chunk.

@@ -39,9 +39,7 @@ class SanitizationFilter:
 
         # 2. Remove control characters (keep \n and \t).
         value = "".join(
-            c
-            for c in value
-            if c in "\n\t" or (0x20 <= ord(c) < 0x7F) or ord(c) > 0x9F
+            c for c in value if c in "\n\t" or (0x20 <= ord(c) < 0x7F) or ord(c) > 0x9F
         )
 
         # 3. Newline normalization.

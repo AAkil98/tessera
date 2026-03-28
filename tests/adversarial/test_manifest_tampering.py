@@ -47,7 +47,7 @@ async def test_tampered_manifest_hash(tmp_path: Path) -> None:
 
     provider = TamperedManifestSource(
         publisher._manifest_store,  # type: ignore[arg-type]
-        publisher._tessera_store,   # type: ignore[arg-type]
+        publisher._tessera_store,  # type: ignore[arg-type]
         mh,
     )
 
@@ -81,7 +81,7 @@ async def test_manifest_bad_magic(tmp_path: Path) -> None:
             return await self._ts.read(self._mh, index)
 
     provider = BadMagicSource(
-        publisher._tessera_store,   # type: ignore[arg-type]
+        publisher._tessera_store,  # type: ignore[arg-type]
         mh,
     )
 

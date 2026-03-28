@@ -101,9 +101,9 @@ async def test_bench_memory(tmp_path: Path) -> None:
     A real multi-peer fetch would require MFP loopback infrastructure.
     This simulates the memory footprint of the storage/bitfield/state layer.
     """
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Memory Footprint Benchmark")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Force garbage collection and get baseline RSS
     gc.collect()
@@ -166,7 +166,7 @@ async def test_bench_memory(tmp_path: Path) -> None:
         peer_bitfields.append(bf)
 
     # Force memory allocation
-    _ = [bf.serialize() for bf in peer_bitfields]
+    _ = [bf.to_bytes() for bf in peer_bitfields]
 
     # Measure peak RSS
     gc.collect()
@@ -177,9 +177,7 @@ async def test_bench_memory(tmp_path: Path) -> None:
     tessera_managed_mb = peak_rss_mb - baseline_rss_mb
     budget_met = tessera_managed_mb <= BUDGET_MB
     deviation_pct = (
-        ((tessera_managed_mb - BUDGET_MB) / BUDGET_MB) * 100
-        if not budget_met
-        else 0
+        ((tessera_managed_mb - BUDGET_MB) / BUDGET_MB) * 100 if not budget_met else 0
     )
 
     result = {
@@ -205,7 +203,7 @@ async def test_bench_memory(tmp_path: Path) -> None:
     results_file.write_text(json.dumps(result, indent=2))
 
     # Print summary
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("File size:       1 GB")
     print(f"Pieces:          {piece_count:,}")
     print("Simulated peers: 50")
@@ -216,8 +214,10 @@ async def test_bench_memory(tmp_path: Path) -> None:
     print(f"Status:          {'✓ PASS' if budget_met else '✗ FAIL'}")
     if not budget_met:
         print(f"Deviation:       +{deviation_pct:.2f}%")
-    print("\nNote: Memory measurement is approximate and includes Python runtime overhead.")
-    print(f"{'='*60}\n")
+    print(
+        "\nNote: Memory measurement is approximate and includes Python runtime overhead."
+    )
+    print(f"{'=' * 60}\n")
 
     # Advisory warning for significant deviation
     if deviation_pct > 25:

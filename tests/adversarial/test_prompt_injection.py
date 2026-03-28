@@ -51,9 +51,7 @@ class MetadataPeerSource:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("payload", INJECTION_PAYLOADS)
-async def test_injection_in_name_does_not_crash(
-    tmp_path: Path, payload: str
-) -> None:
+async def test_injection_in_name_does_not_crash(tmp_path: Path, payload: str) -> None:
     """Publishing with an injection payload in 'name' metadata must not crash."""
     pub = tmp_path / "pub"
     pub.mkdir()
@@ -89,9 +87,7 @@ async def test_injection_metadata_does_not_affect_assembled_content(
     fetch_dir = tmp_path / "fetch"
     fetch_dir.mkdir()
     async with TesseraNode(_config(fetch_dir)) as leecher:
-        leecher._test_piece_provider = MetadataPeerSource(
-            seeder._ms, seeder._ts, mh
-        )
+        leecher._test_piece_provider = MetadataPeerSource(seeder._ms, seeder._ts, mh)
         out = await leecher.fetch(mh, output_path=fetch_dir / "out.bin")
 
     assert out.read_bytes() == data
@@ -125,9 +121,7 @@ async def test_oversized_metadata_value_does_not_crash(tmp_path: Path) -> None:
 
     async with TesseraNode(_config(pub)) as seeder:
         try:
-            mh = await seeder.publish(
-                pub / "data.bin", metadata={"name": "X" * 65536}
-            )
+            mh = await seeder.publish(pub / "data.bin", metadata={"name": "X" * 65536})
             raw = await seeder._ms.read(mh)
             assert raw is not None
         except Exception:

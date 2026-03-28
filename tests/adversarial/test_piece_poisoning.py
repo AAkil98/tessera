@@ -63,7 +63,7 @@ async def test_poison_single_piece(tmp_path: Path) -> None:
 
     provider = PoisonedPeerSource(
         publisher._manifest_store,  # type: ignore[arg-type]
-        publisher._tessera_store,   # type: ignore[arg-type]
+        publisher._tessera_store,  # type: ignore[arg-type]
         mh,
         corrupt_index=0,
     )
@@ -105,7 +105,7 @@ async def test_poison_correct_hash_wrong_index(tmp_path: Path) -> None:
 
     provider = WrongIndexSource(
         publisher._manifest_store,  # type: ignore[arg-type]
-        publisher._tessera_store,   # type: ignore[arg-type]
+        publisher._tessera_store,  # type: ignore[arg-type]
         mh,
     )
 

@@ -49,9 +49,7 @@ class LocalPeerSource:
 def _local_source(seeder: TesseraNode, manifest_hash: bytes) -> LocalPeerSource:
     assert seeder._manifest_store is not None
     assert seeder._tessera_store is not None
-    return LocalPeerSource(
-        seeder._manifest_store, seeder._tessera_store, manifest_hash
-    )
+    return LocalPeerSource(seeder._manifest_store, seeder._tessera_store, manifest_hash)
 
 
 def _config(tmp_path: Path) -> TesseraConfig:
@@ -72,10 +70,16 @@ async def test_sc5_twenty_line_cycle(tmp_path: Path) -> None:
     src.parent.mkdir()
     src.write_bytes(small())
 
-    async with TesseraNode(TesseraConfig(data_dir=pub_dir, tessera_size=TESSERA_SIZE)) as publisher:
-        manifest_hash = await publisher.publish(str(src), metadata={"description": "test file"})
+    async with TesseraNode(
+        TesseraConfig(data_dir=pub_dir, tessera_size=TESSERA_SIZE)
+    ) as publisher:
+        manifest_hash = await publisher.publish(
+            str(src), metadata={"description": "test file"}
+        )
 
-    async with TesseraNode(TesseraConfig(data_dir=fet_dir, tessera_size=TESSERA_SIZE)) as fetcher:
+    async with TesseraNode(
+        TesseraConfig(data_dir=fet_dir, tessera_size=TESSERA_SIZE)
+    ) as fetcher:
         fetcher._test_piece_provider = _local_source(publisher, manifest_hash)  # type: ignore[assignment]
         out = await fetcher.fetch(manifest_hash)
 
@@ -104,7 +108,10 @@ async def test_e2e_basic_transfer(tmp_path: Path) -> None:
         out = await fetcher.fetch(mh)
 
     assert out.read_bytes() == src.read_bytes()
-    assert hashlib.sha256(out.read_bytes()).digest() == hashlib.sha256(src.read_bytes()).digest()
+    assert (
+        hashlib.sha256(out.read_bytes()).digest()
+        == hashlib.sha256(src.read_bytes()).digest()
+    )
 
 
 @pytest.mark.e2e

@@ -26,9 +26,7 @@ _DATA = tiny()
 _LEAF = hashlib.sha256(_DATA).digest()
 
 
-async def _setup_complete_mosaic(
-    data_dir: Path, role: str = "fetcher"
-) -> bytes:
+async def _setup_complete_mosaic(data_dir: Path, role: str = "fetcher") -> bytes:
     """Write a minimal 1-tessera mosaic and state file; return manifest_hash."""
     ensure_data_dir(data_dir)
     builder = ManifestBuilder(
@@ -113,9 +111,7 @@ async def test_gc_deletes_manifest_when_asked(tmp_path: Path) -> None:
     gc = GarbageCollector(tmp_path)
     ms = ManifestStore(tmp_path)
     await ms.rebuild_index()
-    await gc.collect(
-        mh, force=True, retain_manifests=False, manifest_index=ms.index
-    )
+    await gc.collect(mh, force=True, retain_manifests=False, manifest_index=ms.index)
     assert not manifest_path(tmp_path, mh).exists()
     assert ms.index.all_metadata() == []
 
@@ -147,7 +143,9 @@ async def test_gc_cancelled_transfer(tmp_path: Path) -> None:
 
 
 @pytest.mark.integration
-def test_gc_orphaned_directory_warning(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+def test_gc_orphaned_directory_warning(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
     """Tessera dir with no state file → warning logged, not auto-deleted."""
     from tessera.storage.layout import startup_cleanup
 

@@ -91,7 +91,10 @@ async def test_withhold_last_piece_raises(tmp_path: Path) -> None:
     fetch_dir.mkdir()
     async with TesseraNode(_config(fetch_dir)) as leecher:
         leecher._test_piece_provider = LastPieceWithheldSource(
-            seeder._ms, seeder._ts, mh, total=4  # small() has 4 pieces
+            seeder._ms,
+            seeder._ts,
+            mh,
+            total=4,  # small() has 4 pieces
         )
         with pytest.raises(TesseraError):
             await leecher.fetch(mh, output_path=fetch_dir / "out.bin")

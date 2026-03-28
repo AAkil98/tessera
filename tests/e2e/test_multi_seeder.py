@@ -20,7 +20,9 @@ TESSERA_SIZE = DEFAULT_CHUNK_SIZE
 class RoundRobinPeerSource:
     """Distribute piece requests round-robin across multiple seeders."""
 
-    def __init__(self, seeders: list[tuple[ManifestStore, TesseraStore, bytes]]) -> None:
+    def __init__(
+        self, seeders: list[tuple[ManifestStore, TesseraStore, bytes]]
+    ) -> None:
         self._seeders = seeders
         self._idx = 0
 
@@ -123,8 +125,8 @@ async def test_e2e_seeder_leaves_mid_transfer(tmp_path: Path) -> None:
 
     provider = HalfAndHalfSource(
         node_a._manifest_store,  # type: ignore[arg-type]
-        node_a._tessera_store,   # type: ignore[arg-type]
-        node_b._tessera_store,   # type: ignore[arg-type]
+        node_a._tessera_store,  # type: ignore[arg-type]
+        node_b._tessera_store,  # type: ignore[arg-type]
         mh,
     )
 

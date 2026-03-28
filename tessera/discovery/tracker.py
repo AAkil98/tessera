@@ -104,9 +104,7 @@ class TrackerBackend:
                     PeerRecord(
                         agent_id=bytes.fromhex(item["agent_id"]),
                         role=item.get("role", "seeder"),
-                        last_seen=float(
-                            item.get("last_seen", time.time())
-                        ),
+                        last_seen=float(item.get("last_seen", time.time())),
                         source=self._name,
                     )
                 )

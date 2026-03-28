@@ -230,11 +230,13 @@ async def test_discovery_client_multi_source_trust() -> None:
     peers_c = [
         PeerRecord(_PEER_A, "seeder", time.time()),
     ]
-    client = DiscoveryClient([
-        _MockBackend("b1", peers_a),
-        _MockBackend("b2", peers_b),
-        _MockBackend("b3", peers_c),
-    ])
+    client = DiscoveryClient(
+        [
+            _MockBackend("b1", peers_a),
+            _MockBackend("b2", peers_b),
+            _MockBackend("b3", peers_c),
+        ]
+    )
     ranked = await client.lookup(_HASH)
     by_id = {r.record.agent_id: r for r in ranked}
     assert by_id[_PEER_A].trust == TrustLevel.HIGH
@@ -257,10 +259,12 @@ async def test_discovery_client_backend_failure_handled() -> None:
             pass
 
     good = [PeerRecord(_PEER_A, "seeder", time.time())]
-    client = DiscoveryClient([
-        _FailingBackend(),
-        _MockBackend("b2", good),
-    ])
+    client = DiscoveryClient(
+        [
+            _FailingBackend(),
+            _MockBackend("b2", good),
+        ]
+    )
     ranked = await client.lookup(_HASH)
     assert len(ranked) == 1
     assert ranked[0].record.agent_id == _PEER_A
@@ -321,10 +325,12 @@ async def test_tracker_announce() -> None:
 @pytest.mark.integration
 async def test_tracker_lookup() -> None:
     mock = _MockHTTPClient()
-    mock.set_lookup_response([
-        {"agent_id": _PEER_A.hex(), "role": "seeder", "last_seen": time.time()},
-        {"agent_id": _PEER_B.hex(), "role": "leecher", "last_seen": time.time()},
-    ])
+    mock.set_lookup_response(
+        [
+            {"agent_id": _PEER_A.hex(), "role": "seeder", "last_seen": time.time()},
+            {"agent_id": _PEER_B.hex(), "role": "leecher", "last_seen": time.time()},
+        ]
+    )
     tracker = TrackerBackend("http://tracker.test", client=mock)
     peers = await tracker.lookup(_HASH)
     assert len(peers) == 2

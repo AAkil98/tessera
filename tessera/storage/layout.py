@@ -51,12 +51,7 @@ def manifest_path(data_dir: Path, manifest_hash: bytes) -> Path:
     Example: hash a3f2…c891 → manifests/a3/a3f2…c891.manifest
     """
     hex_hash = manifest_hash.hex()
-    return (
-        data_dir.expanduser()
-        / "manifests"
-        / hex_hash[:2]
-        / f"{hex_hash}.manifest"
-    )
+    return data_dir.expanduser() / "manifests" / hex_hash[:2] / f"{hex_hash}.manifest"
 
 
 def tessera_dir(data_dir: Path, manifest_hash: bytes) -> Path:
@@ -71,9 +66,7 @@ def tessera_path(data_dir: Path, manifest_hash: bytes, index: int) -> Path:
 
 def state_path(data_dir: Path, manifest_hash: bytes) -> Path:
     """Path for a transfer state file."""
-    return (
-        data_dir.expanduser() / "transfers" / f"{manifest_hash.hex()}.state"
-    )
+    return data_dir.expanduser() / "transfers" / f"{manifest_hash.hex()}.state"
 
 
 def node_id_path(data_dir: Path) -> Path:
@@ -133,6 +126,4 @@ def startup_cleanup(data_dir: Path) -> None:
                 continue
             state_file = transfers_dir / f"{tdir.name}.state"
             if not state_file.exists():
-                log.warning(
-                    "Orphaned tessera directory (no state file): %s", tdir
-                )
+                log.warning("Orphaned tessera directory (no state file): %s", tdir)

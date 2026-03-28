@@ -22,16 +22,38 @@ class MockClient:
 
 
 _PEERS = [
-    {"id": "aabb", "score": 0.9, "latency_ms": 10, "failure_rate": 0.0, "bytes_delivered": 1000},
-    {"id": "ccdd", "score": 0.5, "latency_ms": 50, "failure_rate": 0.1, "bytes_delivered": 500},
-    {"id": "eeff", "score": 0.3, "latency_ms": 100, "failure_rate": 0.2, "bytes_delivered": 100},
+    {
+        "id": "aabb",
+        "score": 0.9,
+        "latency_ms": 10,
+        "failure_rate": 0.0,
+        "bytes_delivered": 1000,
+    },
+    {
+        "id": "ccdd",
+        "score": 0.5,
+        "latency_ms": 50,
+        "failure_rate": 0.1,
+        "bytes_delivered": 500,
+    },
+    {
+        "id": "eeff",
+        "score": 0.3,
+        "latency_ms": 100,
+        "failure_rate": 0.2,
+        "bytes_delivered": 100,
+    },
 ]
 
 
-def _make_adapter(response: str, interval: float = 60.0, threshold: float = 0.7) -> tuple[RankingAdapter, MockClient]:
+def _make_adapter(
+    response: str, interval: float = 60.0, threshold: float = 0.7
+) -> tuple[RankingAdapter, MockClient]:
     client = MockClient(response)
     bridge = IntelligenceBridge(client=client)
-    return RankingAdapter(bridge, interval=interval, confidence_threshold=threshold), client
+    return RankingAdapter(
+        bridge, interval=interval, confidence_threshold=threshold
+    ), client
 
 
 @pytest.mark.asyncio

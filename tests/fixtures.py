@@ -23,9 +23,21 @@ MEDIUM_SIZE = DEFAULT_CHUNK_SIZE * 200  # 50 MiB — 200 tesserae
 EMPTY_SIZE = 0
 
 
+_RANDBYTES_MAX = 128 * 1024 * 1024  # 128 MiB per call (safe for C int limit)
+
+
 def make_bytes(size: int, seed: int = FIXED_SEED) -> bytes:
     """Return *size* deterministic pseudorandom bytes seeded with *seed*."""
-    return random.Random(seed).randbytes(size)
+    rng = random.Random(seed)
+    if size <= _RANDBYTES_MAX:
+        return rng.randbytes(size)
+    parts: list[bytes] = []
+    remaining = size
+    while remaining > 0:
+        chunk = min(remaining, _RANDBYTES_MAX)
+        parts.append(rng.randbytes(chunk))
+        remaining -= chunk
+    return b"".join(parts)
 
 
 def empty() -> bytes:

@@ -52,6 +52,7 @@ def _config(d: Path, client: Any = None) -> TesseraConfig:
 # Bridge-level degradation
 # ---------------------------------------------------------------------------
 
+
 def test_bridge_inactive_without_client() -> None:
     """IntelligenceBridge.active must be False when no client is provided."""
     bridge = IntelligenceBridge(client=None)
@@ -121,7 +122,15 @@ async def test_ranking_returns_none_on_provider_failure() -> None:
     """Ranking returns None when LLM provider raises."""
     bridge = IntelligenceBridge(client=FailingClient())
     adapter = RankingAdapter(bridge)
-    peers = [{"id": "aabb", "score": 0.9, "latency_ms": 10, "failure_rate": 0.0, "bytes_delivered": 0}]
+    peers = [
+        {
+            "id": "aabb",
+            "score": 0.9,
+            "latency_ms": 10,
+            "failure_rate": 0.0,
+            "bytes_delivered": 0,
+        }
+    ]
     hint = await adapter.get_hint(0, peers, "file.bin", 0.0)
     assert hint is None
 
@@ -129,6 +138,7 @@ async def test_ranking_returns_none_on_provider_failure() -> None:
 # ---------------------------------------------------------------------------
 # Node-level degradation: full transfer still completes
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_transfer_succeeds_with_failing_ai_client(tmp_path: Path) -> None:
@@ -163,6 +173,7 @@ async def test_node_status_includes_ai_status(tmp_path: Path) -> None:
         status = await node.status()
 
     from tessera.types import NodeStatus
+
     assert isinstance(status, NodeStatus)
     assert status.ai is not None
     assert status.ai.active is True
@@ -179,6 +190,7 @@ async def test_node_status_ai_inactive_without_client(tmp_path: Path) -> None:
         status = await node.status()
 
     from tessera.types import NodeStatus
+
     assert isinstance(status, NodeStatus)
     assert status.ai is not None
     assert status.ai.active is False

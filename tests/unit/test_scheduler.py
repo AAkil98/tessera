@@ -101,9 +101,7 @@ def test_sequential_fallback_single_peer() -> None:
 def test_sequential_fallback_few_remaining() -> None:
     """≤ sequential_threshold remaining → sequential selection."""
     # 100 pieces, hold 97, 3 remain. threshold = max(10, 5% of 100) = 10 → sequential.
-    sched = _scheduler(
-        total=100, held=list(range(97)), sequential_threshold_pct=0.05
-    )
+    sched = _scheduler(total=100, held=list(range(97)), sequential_threshold_pct=0.05)
     sched.update_peer_bitfield(_peer(1), set(range(100)))
     sched.update_peer_bitfield(_peer(2), set(range(100)))
     sched._requests_issued = 10

@@ -82,9 +82,9 @@ def test_bench_hash(tmp_path: Path) -> None:
     results_file.write_text(json.dumps(result, indent=2))
 
     # Print summary for human readability
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("SHA-256 Performance Benchmark")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"Block size:      {TESSERA_SIZE // 1024} KB")
     print(f"Iterations:      {ITERATIONS:,}")
     print(f"Median latency:  {median_ms:.4f} ms")
@@ -95,7 +95,7 @@ def test_bench_hash(tmp_path: Path) -> None:
     print(f"Status:          {'✓ PASS' if budget_met else '✗ FAIL'}")
     if not budget_met:
         print(f"Deviation:       +{deviation_pct:.2f}%")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # Advisory assertion - does not block, just warns
     if median_ms > BUDGET_MS_PER_BLOCK * 1.25:  # >25% over budget
