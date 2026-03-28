@@ -189,3 +189,28 @@ async def test_aclose_no_method() -> None:
     tb = TrackerBackend("https://tracker.test", client=client)
 
     await tb.aclose()
+
+
+# ---------------------------------------------------------------------------
+# Missing httpx
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_init_raises_when_httpx_unavailable(monkeypatch) -> None:
+    """TrackerBackend without client= must raise ImportError when httpx is missing."""
+    import tessera.discovery.tracker as mod
+
+    monkeypatch.setattr(mod, "_HTTPX_AVAILABLE", False)
+
+    with pytest.raises(ImportError, match="httpx is required"):
+        TrackerBackend("https://tracker.test")
+
+
+@pytest.mark.unit
+async def test_init_creates_httpx_client_when_available() -> None:
+    """TrackerBackend without client= auto-creates an httpx.AsyncClient."""
+    tb = TrackerBackend("https://tracker.test", timeout=5.0)
+
+    assert tb._client is not None
+    await tb.aclose()

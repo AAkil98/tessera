@@ -1091,3 +1091,20 @@ def test_main_unexpected_exception_json(
     obj = json.loads(out)
     assert "error" in obj
     assert "boom" in obj["error"]
+
+
+# ---------------------------------------------------------------------------
+# __main__.py entry point (lines 3, 5-6)
+# ---------------------------------------------------------------------------
+
+
+def test_python_m_tessera_invocation():
+    """``python -m tessera --help`` exercises __main__.py:3-6."""
+    import runpy
+
+    with pytest.raises(SystemExit) as exc_info:
+        runpy.run_module("tessera", run_name="__main__", alter_sys=True)
+    # --help is not set so argparse prints usage and exits 2,
+    # or the default subcommand runs. Either way __main__.py is exercised.
+    # With no args, argparse exits with code 2 (missing subcommand).
+    assert exc_info.value.code in (0, 2)
