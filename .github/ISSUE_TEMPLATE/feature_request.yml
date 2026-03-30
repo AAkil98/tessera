@@ -1,0 +1,48 @@
+name: Feature Request
+description: Suggest an enhancement or new feature
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement to Tessera!
+
+  - type: dropdown
+    id: layer
+    attributes:
+      label: Which layer does this relate to?
+      options:
+        - Content (chunking, Merkle trees, manifests)
+        - Wire (binary protocol)
+        - Transfer (piece selection, peer scoring)
+        - Swarm (peer discovery, capacity)
+        - Storage (persistence, GC)
+        - Bridge (AI adapters)
+        - API / CLI
+        - Other / unsure
+    validations:
+      required: false
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or motivation
+      description: What problem does this solve, or what use case does it enable?
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How should this work? Reference a spec if applicable (e.g., ts-spec-008 section 3).
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any other approaches you've thought about.
+    validations:
+      required: false
