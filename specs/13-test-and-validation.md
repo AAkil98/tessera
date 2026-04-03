@@ -5,7 +5,7 @@ id: ts-spec-013
 type: spec
 status: stable
 created: 2026-03-19
-revised: 2026-03-26
+revised: 2026-04-04
 authors:
   - Akil Abderrahim
   - Claude Opus 4.6
@@ -269,6 +269,25 @@ Each of the 8 message types must round-trip through encode → decode.
 | `test_catch_base_class` | `try/except TesseraError` catches all subclasses. |
 | `test_string_representation` | All exceptions produce meaningful `str()` output including their fields. |
 
+### 3.10 Metadata module (ts-spec-010, Reserved Metadata Keys)
+
+| Test case | Verification |
+|-----------|-------------|
+| `test_reserved_keys_frozenset` | `RESERVED_KEYS` is a `frozenset` containing all 8 reserved key names. |
+| `test_constants_match_reserved_keys` | Each string constant (`NAME`, `CHANNEL`, etc.) is a member of `RESERVED_KEYS`. |
+| `test_auto_populate_adds_created_at` | `auto_populate({})` adds `created_at` key with a valid ISO 8601 timestamp. |
+| `test_auto_populate_preserves_existing` | `auto_populate({"created_at": "2026-01-01T00:00:00Z"})` does not overwrite the value. |
+| `test_auto_populate_mutates_in_place` | The passed dict is modified, not copied. |
+
+### 3.11 WatchHandle
+
+| Test case | Verification |
+|-----------|-------------|
+| `test_cancel_running_task` | `cancel()` cancels a running asyncio task. Task enters cancelled state. |
+| `test_cancel_finished_task` | `cancel()` on an already-finished task does not raise. |
+| `test_cancel_idempotent` | Calling `cancel()` twice does not raise. |
+| `test_cancel_on_task_that_raises` | `cancel()` on a task that raised an exception does not propagate the exception. |
+
 ---
 
 ## 4. Integration Tests
@@ -339,7 +358,28 @@ Integration tests connect two or more components within a single node, using rea
 | `test_index_remove` | Write manifest → `remove(hash)` → query | Entry no longer in index. Manifest file still on disk (index is in-memory only). |
 | `test_index_corrupt_manifest` | Write manifest → corrupt file on disk → `rebuild()` | Corrupt entry skipped (hash mismatch on read). Warning logged. |
 
-### 4.6 Garbage collection
+### 4.6 Agent Data Plane
+
+**Components exercised:** TesseraNode → `publish_bytes()`, `list_manifests()`, `watch()`, metadata conventions.
+
+| Test case | Steps | Verification |
+|-----------|-------|-------------|
+| `test_publish_bytes_roundtrip` | `publish_bytes(data, metadata={"name": "test.bin"})` → `fetch()` | Output file matches original bytes. |
+| `test_publish_bytes_name_required` | `publish_bytes(data, metadata=None)` | Raises `ValueError`. |
+| `test_publish_bytes_determinism` | Publish same bytes twice with same metadata | Identical manifest hash. |
+| `test_list_manifests_channel_filter` | Publish 3 manifests with different channels → `list_manifests(channel="x")` | Returns only matching manifests. |
+| `test_list_manifests_producer_filter` | Publish with different producers → `list_manifests(producer="agent-1")` | Returns only matching manifests. |
+| `test_list_manifests_since_filter` | Publish manifests at different times → `list_manifests(since=timestamp)` | Returns only manifests created after timestamp. |
+| `test_list_manifests_combined_filters` | `list_manifests(channel="x", producer="y")` | AND logic — both filters must match. |
+| `test_list_manifests_empty_result` | `list_manifests(channel="nonexistent")` | Returns empty list. |
+| `test_list_manifests_sort_order` | Publish multiple manifests → `list_manifests()` | Results sorted by `created_at` descending. |
+| `test_watch_fires_on_new_manifest` | Start `watch()` → publish a matching manifest | `on_new` callback fires with correct `ManifestEvent`. |
+| `test_watch_ignores_non_matching` | Start `watch(channel="x")` → publish with `channel="y"` | `on_new` not fired. |
+| `test_watch_cancel_stops_polling` | Start `watch()` → `handle.cancel()` | Polling task cancelled. No further callbacks. |
+| `test_watch_skips_existing` | Publish manifest → start `watch()` | Existing manifest not reported via `on_new`. |
+| `test_auto_populate_in_publish` | `publish(file)` without `created_at` in metadata | Manifest metadata contains `created_at` with valid ISO 8601 timestamp. |
+
+### 4.7 Garbage collection
 
 **Components exercised:** GC → TesseraStore → ManifestIndex.
 
@@ -737,14 +777,15 @@ The CI pipeline runs on every commit and PR. Tests are organized into stages tha
 
 ### Branch coverage gate
 
-Branch coverage is measured but selectively gated:
+Combined line+branch coverage is gated at 99% via `--cov-fail-under=99` in `pyproject.toml`. This prevents merging any PR that drops below the threshold. As of v1.0.0, the test suite achieves 100% line and 100% branch coverage across all 46 source modules (2,510 statements, 576 branches).
+
+Additionally, the following components have a higher bar — any missing branch is investigated:
 
 | Component | Branch coverage requirement | Rationale |
 |-----------|-----------------------------|-----------|
-| Protocol state machine (message dispatch, state transitions) | ≥ 90% | State machines are the primary attack surface. Missing branches indicate untested error paths. |
-| Piece selection logic (rarest-first, sequential, endgame) | ≥ 90% | Selection correctness directly affects transfer performance and swarm health. |
-| Peer scoring (score computation, threshold checks) | ≥ 90% | Scoring drives eviction — untested branches could let malicious peers persist. |
-| All other code | Measured, not gated | Line coverage is tracked for visibility but not enforced. Coverage requirements on utility code add friction without proportional safety benefit. |
+| Protocol state machine (message dispatch, state transitions) | 100% | State machines are the primary attack surface. Missing branches indicate untested error paths. |
+| Piece selection logic (rarest-first, sequential, endgame) | 100% | Selection correctness directly affects transfer performance and swarm health. |
+| Peer scoring (score computation, threshold checks) | 100% | Scoring drives eviction — untested branches could let malicious peers persist. |
 
 ### Benchmark trend tracking
 

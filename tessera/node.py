@@ -2,12 +2,15 @@
 
 Spec: ts-spec-010 §2
 
-Exposes five async methods:
-  publish(file_path)  → manifest_hash
-  fetch(manifest_hash) → output_path
-  status([manifest_hash]) → TransferStatus | NodeStatus
+Exposes eight async methods:
+  publish(file_path)       → manifest_hash
+  publish_bytes(data)      → manifest_hash
+  fetch(manifest_hash)     → output_path
+  status([manifest_hash])  → TransferStatus | NodeStatus
   cancel(manifest_hash)
-  query(text) → list[DiscoveryResult]
+  query(text)              → list[DiscoveryResult]
+  list_manifests(...)      → list[ManifestInfo]
+  watch(...)               → WatchHandle
 
 Piece transfer is abstracted behind the _PieceSource protocol so the
 node can be exercised in-process (E2E tests) without a live MFP runtime.
@@ -17,6 +20,7 @@ before calling fetch().  This attribute is not part of the public API.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import time
 from collections.abc import Callable
@@ -31,7 +35,8 @@ from tessera.content.chunker import Chunker
 from tessera.content.manifest import ManifestBuilder, ManifestParser
 from tessera.discovery.client import DiscoveryClient
 from tessera.errors import CapacityError, IntegrityError, StarvationError, TesseraError
-from tessera.storage.layout import ensure_data_dir, startup_cleanup
+from tessera.metadata import auto_populate
+from tessera.storage.layout import ensure_data_dir, make_tmp_path, startup_cleanup
 from tessera.storage.manifest_store import ManifestStore
 from tessera.storage.state import TransferState, write_state
 from tessera.storage.tessera_store import TesseraStore
@@ -50,6 +55,7 @@ from tessera.types import (
     TransferCompleteEvent,
     TransferMode,
     TransferStatus,
+    WatchHandle,
 )
 
 # ---------------------------------------------------------------------------
@@ -209,6 +215,7 @@ class TesseraNode:
         meta: dict[str, str] = {"name": fp.name}
         if metadata:
             meta.update(metadata)
+        auto_populate(meta)
 
         # Chunk and collect leaf hashes.
         chunker = Chunker(
@@ -261,6 +268,44 @@ class TesseraNode:
             )
 
         return manifest_hash
+
+    # ------------------------------------------------------------------
+    # publish_bytes()
+    # ------------------------------------------------------------------
+
+    async def publish_bytes(
+        self,
+        data: bytes,
+        metadata: dict[str, str] | None = None,
+        skip_moderation: bool = False,
+    ) -> bytes:
+        """Publish in-memory data as a mosaic.
+
+        Identical to ``publish()`` but accepts bytes instead of a file path.
+        The ``name`` metadata key must be provided (no filename to infer).
+
+        Args:
+            data: The raw bytes to publish.
+            metadata: Must include ``name``. Other keys optional.
+            skip_moderation: If True, bypass moderation gate.
+
+        Returns:
+            The manifest hash (32 bytes).
+
+        Raises:
+            ValueError: *metadata* is None or missing ``name`` key.
+            CapacityError: max_swarms_per_node reached.
+        """
+        if metadata is None or "name" not in metadata:
+            raise ValueError("metadata must include a 'name' key for publish_bytes()")
+
+        self._check_started()
+        tmp = make_tmp_path(self._dd, suffix=".publish_bytes")
+        try:
+            tmp.write_bytes(data)
+            return await self.publish(tmp, metadata=metadata, skip_moderation=skip_moderation)
+        finally:
+            tmp.unlink(missing_ok=True)
 
     # ------------------------------------------------------------------
     # fetch()
@@ -480,6 +525,131 @@ class TesseraNode:
         if self._discovery_adapter is None:
             return []
         return await self._discovery_adapter.query(text, max_results)
+
+    # ------------------------------------------------------------------
+    # list_manifests()
+    # ------------------------------------------------------------------
+
+    async def list_manifests(
+        self,
+        channel: str | None = None,
+        producer: str | None = None,
+        artifact_type: str | None = None,
+        since: float | None = None,
+    ) -> list[ManifestInfo]:
+        """List locally known manifests matching structured filters.
+
+        All filters are optional and combined with AND logic.
+        Returns manifests sorted by ``created_at`` descending.
+
+        Args:
+            channel: Filter by metadata ``channel`` value.
+            producer: Filter by metadata ``producer`` value.
+            artifact_type: Filter by metadata ``artifact_type`` value.
+            since: Only return manifests with ``created_at`` after this
+                   Unix timestamp.
+
+        Returns:
+            List of ManifestInfo for matching manifests.
+        """
+        self._check_started()
+        ms = self._ms
+        results: list[tuple[bytes, dict[str, str]]] = []
+
+        for mh, meta in ms.index.all_metadata():
+            if channel is not None and meta.get("channel") != channel:
+                continue
+            if producer is not None and meta.get("producer") != producer:
+                continue
+            if artifact_type is not None and meta.get("artifact_type") != artifact_type:
+                continue
+            if since is not None:
+                created = meta.get("created_at")
+                if created is None:
+                    continue
+                from datetime import datetime, timezone
+
+                try:
+                    ts = datetime.fromisoformat(created).timestamp()
+                except ValueError:
+                    continue
+                if ts <= since:
+                    continue
+            results.append((mh, meta))
+
+        # Sort by created_at descending (missing timestamps sort last).
+        def _sort_key(entry: tuple[bytes, dict[str, str]]) -> str:
+            return entry[1].get("created_at", "")
+
+        results.sort(key=_sort_key, reverse=True)
+
+        # Build ManifestInfo list by reading manifests.
+        infos: list[ManifestInfo] = []
+        for mh, _meta in results:
+            raw = await ms.read(mh)
+            if raw is not None:
+                infos.append(ManifestParser.parse(raw))
+        return infos
+
+    # ------------------------------------------------------------------
+    # watch()
+    # ------------------------------------------------------------------
+
+    async def watch(
+        self,
+        channel: str | None = None,
+        producer: str | None = None,
+        artifact_type: str | None = None,
+        on_new: Callable[[ManifestEvent], None] | None = None,
+        poll_interval: float = 5.0,
+    ) -> WatchHandle:
+        """Watch for new manifests matching structured filters.
+
+        Polls the manifest index at *poll_interval* seconds. Fires *on_new*
+        for each manifest that appears after ``watch()`` is called.
+
+        Args:
+            channel: Filter by metadata ``channel`` value.
+            producer: Filter by metadata ``producer`` value.
+            artifact_type: Filter by metadata ``artifact_type`` value.
+            on_new: Callback fired for each new matching manifest.
+            poll_interval: Seconds between index checks.
+
+        Returns:
+            WatchHandle with a ``cancel()`` method to stop watching.
+        """
+        self._check_started()
+
+        # Snapshot current matching hashes.
+        current = await self.list_manifests(
+            channel=channel, producer=producer, artifact_type=artifact_type,
+        )
+        seen: set[bytes] = {info.manifest_hash for info in current}
+
+        async def _poll() -> None:
+            while True:
+                await asyncio.sleep(poll_interval)
+                latest = await self.list_manifests(
+                    channel=channel,
+                    producer=producer,
+                    artifact_type=artifact_type,
+                )
+                for info in latest:
+                    if info.manifest_hash not in seen:
+                        seen.add(info.manifest_hash)
+                        if on_new is not None:
+                            on_new(
+                                ManifestEvent(
+                                    manifest_hash=info.manifest_hash,
+                                    file_path=info.metadata.get("name", ""),
+                                    file_size=info.file_size,
+                                    tessera_count=info.tessera_count,
+                                    metadata=info.metadata,
+                                )
+                            )
+
+        task = asyncio.create_task(_poll())
+        return WatchHandle(_task=task)
 
     # ------------------------------------------------------------------
     # Internal helpers

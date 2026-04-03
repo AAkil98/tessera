@@ -99,8 +99,8 @@ async def test_bench_multi_peer(tmp_path: Path) -> None:
         await seeder.start()
         seeders.append(seeder)
 
-        # Each seeder publishes the same file
-        mh = await seeder.publish(src_file, metadata={"name": "bench.bin"})
+        # Each seeder publishes the same file (fixed created_at for deterministic hash)
+        mh = await seeder.publish(src_file, metadata={"name": "bench.bin", "created_at": "2026-01-01T00:00:00+00:00"})
         if manifest_hash is None:
             manifest_hash = mh
         else:

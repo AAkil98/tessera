@@ -47,6 +47,7 @@ async def test_e2e_three_seeders(tmp_path: Path) -> None:
     # All three seeders publish the same file.
     seeders: list[TesseraNode] = []
     manifest_hash: bytes | None = None
+    fixed_meta = {"name": "small.bin", "created_at": "2026-01-01T00:00:00+00:00"}
     for i in range(3):
         pub = tmp_path / f"pub{i}"
         src = pub / "small.bin"
@@ -54,7 +55,7 @@ async def test_e2e_three_seeders(tmp_path: Path) -> None:
         src.write_bytes(data)
         node = TesseraNode(_config(pub))
         await node.start()
-        mh = await node.publish(str(src))
+        mh = await node.publish(str(src), metadata=fixed_meta)
         if manifest_hash is None:
             manifest_hash = mh
         assert mh == manifest_hash
@@ -114,12 +115,13 @@ async def test_e2e_seeder_leaves_mid_transfer(tmp_path: Path) -> None:
         (pub / "small.bin").parent.mkdir(parents=True)
         (pub / "small.bin").write_bytes(data)
 
+    fixed_meta = {"name": "small.bin", "created_at": "2026-01-01T00:00:00+00:00"}
     node_a = TesseraNode(_config(pub_a))
     node_b = TesseraNode(_config(pub_b))
     await node_a.start()
     await node_b.start()
-    mh_a = await node_a.publish(str(pub_a / "small.bin"))
-    mh_b = await node_b.publish(str(pub_b / "small.bin"))
+    mh_a = await node_a.publish(str(pub_a / "small.bin"), metadata=fixed_meta)
+    mh_b = await node_b.publish(str(pub_b / "small.bin"), metadata=fixed_meta)
     assert mh_a == mh_b
     mh = mh_a
 

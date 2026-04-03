@@ -5,6 +5,7 @@ Spec: ts-spec-008 §7, ts-spec-010 §4
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -144,3 +145,18 @@ class TransferCompleteEvent:
     elapsed: float
     peers_used: int
     average_throughput: float
+
+
+@dataclass
+class WatchHandle:
+    """Handle returned by ``TesseraNode.watch()``. Call ``cancel()`` to stop."""
+
+    _task: asyncio.Task[None]
+
+    async def cancel(self) -> None:
+        """Stop the watch polling loop."""
+        self._task.cancel()
+        try:
+            await self._task
+        except asyncio.CancelledError:
+            pass

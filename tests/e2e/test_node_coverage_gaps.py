@@ -156,11 +156,12 @@ async def test_publish_same_file_twice_skips_swarm_create(tmp_path: Path) -> Non
     src = tmp_path / "data.bin"
     src.write_bytes(tiny())
 
+    fixed_meta = {"name": "data.bin", "created_at": "2026-01-01T00:00:00+00:00"}
     async with TesseraNode(cfg) as node:
-        mh1 = await node.publish(str(src))
+        mh1 = await node.publish(str(src), metadata=fixed_meta)
         # Second publish of the same file produces the same manifest hash
         # and hits the `if not self._registry.has(manifest_hash)` guard.
-        mh2 = await node.publish(str(src))
+        mh2 = await node.publish(str(src), metadata=fixed_meta)
         assert mh1 == mh2
         # Swarm should still be ACTIVE (not re-created).
         assert node._registry.get(mh1).state == SwarmState.ACTIVE

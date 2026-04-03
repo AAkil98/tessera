@@ -2,12 +2,13 @@
 
 Public API (ts-spec-010 §2):
 
-    from tessera import TesseraNode, TesseraConfig
+    from tessera import TesseraNode, TesseraConfig, WatchHandle
 """
 
 __version__ = "1.0.0"
 
 from tessera.config import TesseraConfig
 from tessera.node import TesseraNode
+from tessera.types import WatchHandle
 
-__all__ = ["TesseraNode", "TesseraConfig", "__version__"]
+__all__ = ["TesseraNode", "TesseraConfig", "WatchHandle", "__version__"]

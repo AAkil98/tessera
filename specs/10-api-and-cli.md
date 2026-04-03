@@ -5,7 +5,7 @@ id: ts-spec-010
 type: spec
 status: stable
 created: 2026-03-17
-revised: 2026-03-26
+revised: 2026-04-04
 authors:
   - Akil Abderrahim
   - Claude Opus 4.6
@@ -30,7 +30,8 @@ This document defines Tessera's public surface — the API that Python callers u
 
 ### What this spec defines
 
-- **Public API.** The five Python functions — `publish()`, `fetch()`, `query()`, `status()`, `cancel()` — their signatures, parameters, return types, and async semantics. This is the library entry point described in ts-spec-004, section 3.3.
+- **Public API.** The eight async methods — `publish()`, `publish_bytes()`, `fetch()`, `query()`, `list_manifests()`, `watch()`, `status()`, `cancel()` — their signatures, parameters, return types, and async semantics. This is the library entry point described in ts-spec-004, section 3.3.
+- **Reserved metadata keys.** The conventional metadata key names (`name`, `channel`, `producer`, `artifact_type`, `created_at`, etc.) that enable structured filtering via `list_manifests()` and `watch()`.
 - **CLI commands.** The command-line interface that maps terminal commands to API calls. Designed for human operators and shell scripts.
 - **TesseraConfig.** The single configuration dataclass that every other component reads. Centralizes all configurable defaults that prior specs referenced as "configurable via ts-spec-010."
 - **Error handling.** The exception hierarchy and error semantics. How API callers distinguish between recoverable and fatal errors.
@@ -57,10 +58,10 @@ This document defines Tessera's public surface — the API that Python callers u
 
 ## 2. Public API
 
-The public API consists of five async functions and one constructor. All are importable from `tessera`:
+The public API consists of eight async methods and one constructor. All are importable from `tessera`:
 
 ```python
-from tessera import TesseraNode, TesseraConfig
+from tessera import TesseraNode, TesseraConfig, WatchHandle
 ```
 
 ### TesseraNode
@@ -115,7 +116,9 @@ async def publish(
     Args:
         file_path: Path to the file to publish.
         metadata: Optional metadata key-value pairs. 'name' is auto-populated
-                  from the filename if not provided.
+                  from the filename if not provided. 'created_at' is auto-populated
+                  with the current UTC timestamp if not provided (see Reserved
+                  Metadata Keys).
         skip_moderation: If True, bypass the content moderation gate.
 
     Returns:
@@ -128,6 +131,39 @@ async def publish(
         TesseraError: Chunking or manifest creation failed.
     """
 ```
+
+### publish_bytes()
+
+```python
+async def publish_bytes(
+    self,
+    data: bytes,
+    metadata: dict[str, str] | None = None,
+    skip_moderation: bool = False,
+) -> bytes:
+    """
+    Publish in-memory data as a mosaic.
+
+    Identical to publish() but accepts bytes instead of a file path.
+    The 'name' metadata key must be provided (no filename to infer).
+    'created_at' is auto-populated if not provided.
+
+    Args:
+        data: The raw bytes to publish.
+        metadata: Must include 'name'. Other keys optional.
+        skip_moderation: If True, bypass the content moderation gate.
+
+    Returns:
+        The manifest hash (32 bytes).
+
+    Raises:
+        ValueError: metadata is None or missing 'name' key.
+        CapacityError: max_swarms_per_node reached.
+        TesseraError: Chunking or manifest creation failed.
+    """
+```
+
+Internally, `publish_bytes()` writes the data to a temporary file in `tmp/`, delegates to `publish()`, and cleans up the temporary file. The caller never manages intermediate files.
 
 ### fetch()
 
@@ -184,6 +220,85 @@ async def query(
         Empty list if no matches or madakit is unavailable.
     """
 ```
+
+### list_manifests()
+
+```python
+async def list_manifests(
+    self,
+    channel: str | None = None,
+    producer: str | None = None,
+    artifact_type: str | None = None,
+    since: float | None = None,
+) -> list[ManifestInfo]:
+    """
+    List locally known manifests matching structured filters.
+
+    All filters are optional and combined with AND logic.
+    Returns manifests sorted by created_at descending.
+
+    Unlike query(), this method is deterministic, free (no LLM tokens),
+    and works without madakit. It operates entirely against the in-memory
+    ManifestIndex.
+
+    Args:
+        channel: Filter by metadata 'channel' value.
+        producer: Filter by metadata 'producer' value.
+        artifact_type: Filter by metadata 'artifact_type' value.
+        since: Only return manifests with created_at after this
+               Unix timestamp.
+
+    Returns:
+        List of ManifestInfo for matching manifests, sorted by
+        created_at descending. Empty list if no matches.
+    """
+```
+
+### watch()
+
+```python
+async def watch(
+    self,
+    channel: str | None = None,
+    producer: str | None = None,
+    artifact_type: str | None = None,
+    on_new: Callable[[ManifestEvent], None] | None = None,
+    poll_interval: float = 5.0,
+) -> WatchHandle:
+    """
+    Watch for new manifests matching structured filters.
+
+    Polls the manifest index at poll_interval seconds. Fires on_new
+    for each manifest that appears after watch() is called. Existing
+    manifests at call time are not reported.
+
+    Args:
+        channel: Filter by metadata 'channel' value.
+        producer: Filter by metadata 'producer' value.
+        artifact_type: Filter by metadata 'artifact_type' value.
+        on_new: Callback fired for each new matching manifest.
+                Receives a ManifestEvent (same dataclass as
+                on_manifest_created). If None, new manifests are
+                tracked but no callback fires.
+        poll_interval: Seconds between index checks. Default 5.0.
+
+    Returns:
+        WatchHandle with a cancel() method to stop watching.
+    """
+```
+
+```python
+@dataclass
+class WatchHandle:
+    """Handle returned by watch(). Call cancel() to stop."""
+
+    _task: asyncio.Task[None]
+
+    async def cancel(self) -> None:
+        """Stop the watch polling loop."""
+```
+
+`watch()` uses `list_manifests()` internally — no duplication of filter logic. The poll-based design avoids new wire protocol messages and works with Tessera's existing pull-based discovery infrastructure.
 
 ### status()
 
@@ -266,6 +381,25 @@ asyncio.run(main())
 ```
 
 14 lines of application code.
+
+### Reserved Metadata Keys
+
+Manifest metadata is a free-form `dict[str, str]`, but a set of reserved keys provide conventional semantics that `list_manifests()`, `watch()`, and agent workflows rely on. These keys are optional — when present, they must follow the documented semantics. Constants are defined in `tessera.metadata`.
+
+| Key | Purpose | Auto-populated? |
+|-----|---------|:---:|
+| `name` | File or artifact name | Yes — from filename in `publish()` |
+| `description` | Human/AI-readable description (used by `query()` discovery) | No |
+| `channel` | Logical grouping or topic (e.g. `nlp-pipeline`) | No |
+| `producer` | Identifier of the producing agent or process | No |
+| `artifact_type` | Kind of artifact: `dataset`, `model`, `result`, `config`, `checkpoint` | No |
+| `supersedes` | Manifest hash (hex) of the artifact this one replaces | No |
+| `depends_on` | Comma-separated manifest hashes this artifact requires | No |
+| `created_at` | ISO 8601 timestamp of artifact creation | Yes — UTC now if not provided |
+
+The `auto_populate()` function (called by `publish()` and `publish_bytes()`) fills in `created_at` with the current UTC timestamp when not already present. No other reserved keys are auto-populated beyond `name` (which is set from the filename in `publish()`).
+
+The reserved key set is exported as `RESERVED_KEYS: frozenset[str]` from `tessera.metadata`. No manifest binary format change is required — these are purely conventional.
 
 ---
 
@@ -404,6 +538,62 @@ Active swarms: 3 / 10
   b8e1...4d20       ACTIVE    12.5%       3       4.1 MB/s
   c7d3...9a12       DRAINING  100.0%      2       0.0 MB/s
 ```
+
+### tessera list
+
+```
+tessera list [--channel CHANNEL] [--producer PRODUCER] [--type TYPE] [--since TIMESTAMP]
+```
+
+Maps to `TesseraNode.list_manifests()`.
+
+| Argument / Option | Maps to | Notes |
+|-------------------|---------|-------|
+| `--channel` | `channel` | Optional. Filter by metadata `channel` value. |
+| `--producer` | `producer` | Optional. Filter by metadata `producer` value. |
+| `--type` | `artifact_type` | Optional. Filter by metadata `artifact_type` value. |
+| `--since` | `since` | Optional. Unix timestamp or ISO 8601. Only show manifests created after this time. |
+
+**Output (text):**
+```
+  #  Created              Channel          Producer       Name
+  1  2026-04-02T14:30:00  nlp-pipeline     nlp-worker-03  extraction_output.parquet
+  2  2026-04-02T14:25:00  nlp-pipeline     coordinator    merged_analysis.json
+```
+
+**Output (--json):**
+```json
+[{"manifest_hash": "a3f2...c891", "name": "extraction_output.parquet", "channel": "nlp-pipeline", "created_at": "2026-04-02T14:30:00Z"}, ...]
+```
+
+### tessera watch
+
+```
+tessera watch [--channel CHANNEL] [--producer PRODUCER] [--type TYPE] [--poll SECONDS]
+```
+
+Maps to `TesseraNode.watch()`. Long-running — streams events until interrupted.
+
+| Argument / Option | Maps to | Notes |
+|-------------------|---------|-------|
+| `--channel` | `channel` | Optional. |
+| `--producer` | `producer` | Optional. |
+| `--type` | `artifact_type` | Optional. |
+| `--poll` | `poll_interval` | Default: 5.0 seconds. |
+
+**Output (text):**
+```
+Watching for new manifests... (Ctrl-C to stop)
+[14:30:05] NEW  a3f2...c891  nlp-pipeline/nlp-worker-03  extraction_output.parquet
+[14:32:10] NEW  b8e1...4d20  nlp-pipeline/coordinator    merged_analysis.json
+```
+
+**Output (--json):** Streams newline-delimited JSON:
+```json
+{"event": "new", "manifest_hash": "a3f2...c891", "channel": "nlp-pipeline", "producer": "nlp-worker-03", "name": "extraction_output.parquet", "created_at": "2026-04-02T14:30:00Z"}
+```
+
+On `SIGINT` / `SIGTERM`, the watch handle is cancelled and the process exits cleanly with code 0.
 
 ### tessera cancel
 
@@ -826,6 +1016,10 @@ class TransferCompleteEvent:
 ```
 
 Use case: post-download processing, chaining fetches in an agent workflow, audit logging.
+
+### watch() on_new callback
+
+The `on_new` parameter on `watch()` (section 2) fires a `ManifestEvent` for each new manifest matching the watch filters. Unlike the node-level hooks above, `on_new` is per-watch and only fires for manifests that appear *after* `watch()` is called. The `ManifestEvent` dataclass is the same one used by `on_manifest_created` and `on_manifest_received`.
 
 ### Callback semantics
 

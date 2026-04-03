@@ -5,7 +5,7 @@ id: ts-spec-002
 type: spec
 status: stable
 created: 2026-03-13
-revised: 2026-03-26
+revised: 2026-04-04
 authors:
   - Akil Abderrahim
   - Claude Opus 4.6
@@ -39,6 +39,9 @@ tags: [glossary, terminology, tessera]
 | **Publish** | The act of chunking a file into tesserae, building the hash tree, producing the manifest, and announcing availability to the network. |
 | **Fetch** | The act of obtaining a manifest, joining its swarm, downloading all tesserae, verifying them against the hash tree, and assembling the mosaic on disk. |
 | **Bitfield** | A bitmap where each bit corresponds to a tessera index and indicates whether the local peer holds that tessera. Exchanged between peers upon joining a swarm and updated via HAVE announcements as new tesserae are acquired. |
+| **Watch** | A reactive discovery primitive that polls the manifest index at a configurable interval and fires a callback when new manifests matching structured filters (channel, producer, artifact type) appear. Returns a `WatchHandle` for cancellation. |
+| **WatchHandle** | A cancellation handle returned by `watch()`. Call `cancel()` to stop the polling loop. Wraps an `asyncio.Task`. |
+| **Reserved Metadata Keys** | A set of conventional metadata key names — `name`, `description`, `channel`, `producer`, `artifact_type`, `supersedes`, `depends_on`, `created_at` — that enable structured filtering via `list_manifests()` and `watch()`. Defined in `tessera.metadata`. Using the reserved keys is optional; when present, they must follow the documented semantics. |
 
 ## 2. Terms Inherited from MFP
 

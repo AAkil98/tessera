@@ -5,7 +5,7 @@ id: ts-spec-004
 type: spec
 status: stable
 created: 2026-03-13
-revised: 2026-03-26
+revised: 2026-04-04
 authors:
   - Akil Abderrahim
   - Claude Opus 4.6
@@ -52,7 +52,8 @@ Each layer is a Python module with an explicit public interface. No layer import
 ┌────────────────────▼────────────────────────────┐
 │            Application Interface                 │
 │         public API · CLI · agent tools           │
-│     publish() · fetch() · query() · status()     │
+│  publish() · publish_bytes() · fetch() · query()  │
+│  list_manifests() · watch() · status() · cancel() │
 └──────┬─────────────────────────────────┬────────┘
        │                                 │
 ┌──────▼──────────┐          ┌───────────▼────────┐
@@ -106,8 +107,8 @@ The Application Interface is the boundary between Tessera internals and the outs
 
 | Subcomponent | Responsibility |
 |-------------|----------------|
-| **Public API** | Python functions: `publish()`, `fetch()`, `query()`, `status()`, `cancel()`. The library entry point. Designed for both human callers and agent callers (G6). |
-| **CLI** | Command-line wrapper around the Public API. Provides `tessera publish`, `tessera fetch`, `tessera status`, etc. |
+| **Public API** | Eight async methods: `publish()`, `publish_bytes()`, `fetch()`, `query()`, `list_manifests()`, `watch()`, `status()`, `cancel()`. The library entry point. Designed for both human callers and agent callers (G6). |
+| **CLI** | Command-line wrapper around the Public API. Provides `tessera publish`, `tessera fetch`, `tessera list`, `tessera watch`, `tessera status`, etc. |
 | **Intelligence Bridge** | Optional adapter that connects madakit's `BaseAgentClient` to the Request Scheduler and Discovery Client. When madakit is not installed, this component is a no-op. |
 
 ## 4. Data Flow: Publish
@@ -117,6 +118,11 @@ User/Agent
     │
     ▼  publish(file_path)
 Application Interface
+    │
+    ▼
+Application Interface
+    │  1a. Auto-populate metadata: fill 'name' from filename,
+    │      fill 'created_at' with UTC timestamp if not provided
     │
     ▼
 Transfer Engine: Chunker
