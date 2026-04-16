@@ -4,7 +4,7 @@
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Status](https://img.shields.io/badge/status-stable-green.svg)](https://github.com/Madahub-dev/tessera/releases)
+[![Status](https://img.shields.io/badge/status-stable-green.svg)](https://github.com/AAkil98/tessera/releases)
 
 Tessera is a torrent-inspired file sharing system where every peer is cryptographically authenticated, every chunk is end-to-end encrypted, and AI provides intelligent content discovery, routing, and moderation.
 
@@ -31,7 +31,7 @@ pip install tessera
 pip install tessera[ai]
 
 # Development installation
-git clone https://github.com/Madahub-dev/tessera.git
+git clone https://github.com/AAkil98/tessera.git
 cd tessera
 pip install -e ".[dev]"
 ```
